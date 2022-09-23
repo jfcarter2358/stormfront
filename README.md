@@ -13,7 +13,7 @@
 # Install
 
 ```bash
-sudo bash <(curl -s https://raw.githubusercontent.com/jfcarter2358/stormfront/main/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/jfcarter2358/stormfront/main/install.sh)
 ```
 
 # Uninstall
@@ -21,7 +21,7 @@ sudo bash <(curl -s https://raw.githubusercontent.com/jfcarter2358/stormfront/ma
 # Installation
 
 ```bash
-sudo bash <(curl -s https://raw.githubusercontent.com/jfcarter2358/stormfront/main/uninstall.sh)
+bash <(curl -s https://raw.githubusercontent.com/jfcarter2358/stormfront/main/uninstall.sh)
 ```
 
 **TODO**

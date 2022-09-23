@@ -2,8 +2,13 @@
 
 set -eo pipefail
 
+echo "Elevating to root user for install..."
+sudo su
+echo "Done!"
+
 RELEASE_BODY=$(curl -s -H "Accept: application/vnd.github+json" https://api.github.com/repos/jfcarter2358/stormfront/releases/latest)
 
+echo "Downloading assets..."
 # Download the daemon and the CLI
 for ASSET in $(echo "${RELEASE_BODY}" | jq -r '.assets[] | @base64'); do
     _jq() {
@@ -19,9 +24,10 @@ for ASSET in $(echo "${RELEASE_BODY}" | jq -r '.assets[] | @base64'); do
 
     chmod +x /bin/"${NAME}"
 done
+echo "Done!"
 
 if [[ "$(ps --no-headers -o comm 1)" == "systemd" ]]; then
-
+    echo "Writing systemd files..."
     # Write out our service file for stormfront
     cat << EOF > /etc/systemd/system/stormfront.service
 server1:/etc/systemd/system # cat /etc/systemd/system/stormfront.service
@@ -35,6 +41,9 @@ ExecStart=/bin/stormfrontd
 WantedBy=multi-user.target
 EOF
 
+    echo "Done!"
+
+    echo "Starting service..."
     # Reload systemd
     systemctl daemon-reload
 
@@ -43,7 +52,10 @@ EOF
 
     # Start stormfront
     systemctl start stormfront.service
+
+    echo "Done!"
 else
+    echo "Writing init.d files..."
     # Write out our init script
     cat << EOF > /etc/init.d/stormfront
 
@@ -83,6 +95,10 @@ EOF
 
     chmod +x /etc/init.d/stormfront
 
+    echo "Done!"
+
+    echo "Starting service..."
     # Start stormfront
     service stormfront start
+    echo "Done!"
 fi
