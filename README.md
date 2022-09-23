@@ -16,6 +16,7 @@
 curl -s https://raw.githubusercontent.com/jfcarter2358/stormfront/main/install.sh > install.sh
 chmod +x install.sh
 sudo ./install.sh
+rm install.sh
 ```
 
 # Uninstall
@@ -26,6 +27,7 @@ sudo ./install.sh
 curl -s https://raw.githubusercontent.com/jfcarter2358/stormfront/main/uninstall.sh > uninstall.sh
 chmod +x uninstall.sh
 sudo ./uninstall.sh
+rm uninstall.sh
 ```
 
 **TODO**
