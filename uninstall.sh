@@ -1,9 +1,5 @@
 #! /usr/bin/env bash
 
-echo "Elevating to root user for uninstall..."
-sudo su
-echo "Done!"
-
 echo "Removing binary files..."
 rm /bin/stormfront
 rm /bin/stormfrontd

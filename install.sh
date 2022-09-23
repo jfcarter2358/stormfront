@@ -2,10 +2,6 @@
 
 set -eo pipefail
 
-echo "Elevating to root user for install..."
-sudo su
-echo "Done!"
-
 RELEASE_BODY=$(curl -s -H "Accept: application/vnd.github+json" https://api.github.com/repos/jfcarter2358/stormfront/releases/latest)
 
 echo "Downloading assets..."
