@@ -11,5 +11,6 @@ if [[ "$(ps --no-headers -o comm 1)" == "systemd" ]]; then
 else
     service stormfront stop
     rm /etc/init.d/stormfront
+    rm /run/stormfrontd.pid
 fi
 
