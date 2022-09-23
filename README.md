@@ -10,7 +10,19 @@
 
 **TODO**
 
-# Running Locally
+# Install
+
+```bash
+sudo bash <(curl -s https://raw.githubusercontent.com/jfcarter2358/stormfront/main/install.sh)
+```
+
+# Uninstall
+
+# Installation
+
+```bash
+sudo bash <(curl -s https://raw.githubusercontent.com/jfcarter2358/stormfront/main/uninstall.sh)
+```
 
 **TODO**
 

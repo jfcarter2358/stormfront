@@ -332,18 +332,13 @@ func RefreshAccessToken(c *gin.Context) {
 }
 
 func HealthCheck() {
-	fmt.Println("Health check loop started")
 	for {
 		for SuccessionLock {
-			fmt.Println("Session is locked, waiting...")
 			time.Sleep(10 * time.Millisecond)
 		}
-		fmt.Println("Session is unlocked!")
 		SuccessionLock = true
-		fmt.Println("Updating succession...")
 		Client.Succession = updateSuccession(Client.Succession)
 		SuccessionLock = false
-		fmt.Println("Waiting until next health check")
 		time.Sleep(HEALTH_CHECK_DELAY * time.Second)
 	}
 }
