@@ -61,20 +61,29 @@ else
 case "\$1" in
     start)
         log_daemon_msg "Starting stormfront daemon" "stormfrontd" || true
-        /bin/stormfrontd &
-        ps -ef | grep /bin/stormfrontd | head -n 1 | awk '{print \$2}' > /run/stormfrontd.pid
-        log_end_msg 0 || true
+        if start-stop-daemon --start --quiet --oknodo --chuid 0:0 --pidfile /run/stormfront.pid --exec /bin/stormfrontd; then
+            log_end_msg 0 || true
+        else
+            log_end_msg 1 || true
+        fi
         ;;
     stop)
         log_daemon_msg "Stopping stormfront daemon" "stormfrontd" || true
-        kill \$(cat /run/stormfrontd.pid)
-        log_end_msg 0 || true
+        if start-stop-daemon --stop --quiet --oknodo --pidfile /run/stormfront.pid --exec /bin/stormfrontd; then
+            log_end_msg 0 || true
+        else
+            log_end_msg 1 || true
+        fi
         ;;
 
     restart)
         log_daemon_msg "Restarting OpenBSD Secure Shell server" "stormfrontd" || true
-        kill \$(cat /run/stormfrontd.pid)
-        /bin/stormfrontd &
+        start-stop-daemon --stop --quiet --oknodo --retry 30 --pidfile /run/stormfront.pid --exec /bin/stormfrontd
+        if start-stop-daemon --start --quiet --oknodo --chuid 0:0 --pidfile /run/stormfront.pid --exec /bin/stormfrontd; then
+            log_end_msg 0 || true
+        else
+            log_end_msg 1 || true
+        fi
         ;;
 
     status)
@@ -95,6 +104,6 @@ EOF
 
     echo "Starting service..."
     # Start stormfront
-    service stormfront start
+    service stormfront start &
     echo "Done!"
 fi
