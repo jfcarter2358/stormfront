@@ -13,12 +13,15 @@ build:
     if 'all' in services:
       services = all_services
 
+    GO_COMMAND = $(goenv which go)
+    GO_COMMAND = GO_COMMAND[:-1]
+
     stud clean
     mkdir dist
 
     for service in services:
       cd src/{service}
-      env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -v -o {service}
+      env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 {GO_COMMAND} build -v -o {service}
       mkdir ../../dist/{service}
       if service == "stormfront-cli":
         mv {service} ../../dist/{service}/stormfront
