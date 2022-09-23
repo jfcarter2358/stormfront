@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 )
 
@@ -18,11 +17,7 @@ type ClientInformation struct {
 }
 
 func getDataDirectory() string {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatal(err)
-	}
-	dataDir := fmt.Sprintf("%s/.stormfront", homeDir)
+	dataDir := "/var/stormfront"
 	return dataDir
 }
 

@@ -3,7 +3,6 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -43,11 +42,7 @@ func RemoveDuplicateValues(stringSlice []string) []string {
 }
 
 func EnsureDataDirectory() error {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatal(err)
-	}
-	dataDir := fmt.Sprintf("%s/.stormfront", homeDir)
+	dataDir := "/var/stormfront"
 	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
 		err = os.MkdirAll(dataDir, 0755)
 		if err != nil {
@@ -75,7 +70,7 @@ func GetIP(interfaceName string) (addr string, err error) {
 		}
 	}
 	if ipv4Addr == nil {
-		return "", errors.New(fmt.Sprintf("interface %s don't have an ipv4 address\n", interfaceName))
+		return "", fmt.Errorf("interface %s don't have an ipv4 address\n", interfaceName)
 	}
 	return ipv4Addr.String(), nil
 }
