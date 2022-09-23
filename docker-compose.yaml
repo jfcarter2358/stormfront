@@ -1,0 +1,31 @@
+version: "3.9"
+networks:
+  isolation-network:
+    driver: bridge
+services:
+  stormfrontd1:
+    image: "stormfrontd"
+    ports:
+      - "127.0.0.1:6674:6674"
+      - "127.0.0.1:6626:6626"
+    environment:
+      STORMFRONTD_DAEMON_HOST: "stormfrontd"
+      STORMFRONTD_DAEMON_PORT: "6674"
+      STORMFRONTD_ALLOWED_IPS: '["127.0.0.1"]'
+      STORMFRONTD_RESTRICT_REQUEST_HOST: "false"
+      STORMFRONTD_CLIENT_PORT: "6626"
+      STORMFRONTD_INTERFACE_NAME: "eth0"
+    tty: true
+  stormfrontd2:
+    image: "stormfrontd"
+    ports:
+      - "127.0.0.1:6675:6675"
+      - "127.0.0.1:6627:6627"
+    environment:
+      STORMFRONTD_DAEMON_HOST: "stormfrontd"
+      STORMFRONTD_DAEMON_PORT: "6675"
+      STORMFRONTD_ALLOWED_IPS: '["127.0.0.1"]'
+      STORMFRONTD_RESTRICT_REQUEST_HOST: "false"
+      STORMFRONTD_CLIENT_PORT: "6627"
+      STORMFRONTD_INTERFACE_NAME: "eth0"
+    tty: true

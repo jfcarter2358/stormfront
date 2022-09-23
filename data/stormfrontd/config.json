@@ -1,0 +1,10 @@
+{
+    "daemon_host": "localhost",
+    "daemon_port": 6674,
+    "allowed_ips": [
+        "127.0.0.1"
+    ],
+    "restrict_request_host": true,
+    "client_port": 6626,
+    "interface_name": "eth0"
+}
