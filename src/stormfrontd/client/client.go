@@ -6,12 +6,14 @@ import (
 	"log"
 	"net/http"
 	"stormfrontd/client/auth"
-	"stormfrontd/client/comms"
+	"stormfrontd/client/communication"
+	"stormfrontd/client/lightning"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 var Client StormfrontClient
@@ -37,6 +39,7 @@ type StormfrontClient struct {
 }
 
 type StormfrontNode struct {
+	ID   string `json:"id"`
 	Host string `json:"host"`
 	Port int    `json:"port"`
 }
@@ -53,6 +56,10 @@ func contains(s []string, e string) bool {
 func GetHealth(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
+	if len(splitToken) != 2 {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
 	token = splitToken[1]
 
 	status := verifyAccessToken(token)
@@ -72,6 +79,10 @@ func GetHealth(c *gin.Context) {
 func GetState(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
+	if len(splitToken) != 2 {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
 	token = splitToken[1]
 
 	status := verifyAccessToken(token)
@@ -86,6 +97,10 @@ func GetState(c *gin.Context) {
 func UpdateFollowerSuccession(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
+	if len(splitToken) != 2 {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
 	token = splitToken[1]
 
 	status := verifyAccessToken(token)
@@ -114,7 +129,7 @@ func updateSuccession(successors []StormfrontNode) []StormfrontNode {
 		foundSuccessor := false
 		for counter := 0; counter < UPDATE_MAX_TRIES; counter++ {
 			fmt.Printf("Trying to reach follower at %s:%v/api/health, %v of %v\n", successor.Host, successor.Port, counter+1, UPDATE_MAX_TRIES)
-			status, _, err := comms.Get(successor.Host, successor.Port, "api/health", AuthClient)
+			status, _, err := communication.Get(successor.Host, successor.Port, "api/health", AuthClient)
 			if err != nil {
 				fmt.Printf("Encountered error: %v\n", err.Error())
 				time.Sleep(UPDATE_RETRY_DELAY * time.Second)
@@ -134,15 +149,13 @@ func updateSuccession(successors []StormfrontNode) []StormfrontNode {
 	}
 
 	for _, successor := range newSuccession {
-		status, _, err := comms.Post(successor.Host, successor.Port, "api/update/succession", AuthClient, postBody)
+		status, _, err := communication.Post(successor.Host, successor.Port, "api/update/succession", AuthClient, postBody)
 		if err != nil {
 			fmt.Printf("Encountered error: %v\n", err.Error())
-			time.Sleep(5 * time.Second)
 			continue
 		}
 		if status != http.StatusOK {
-			fmt.Printf("Encountered error: %v\n", err.Error())
-			time.Sleep(5 * time.Second)
+			fmt.Printf("Encountered non-200 status: %v\n", status)
 			continue
 		}
 	}
@@ -153,6 +166,10 @@ func updateSuccession(successors []StormfrontNode) []StormfrontNode {
 func RegisterFollower(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
+	if len(splitToken) != 2 {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
 	token = splitToken[1]
 
 	status := verifyAccessToken(token)
@@ -181,6 +198,10 @@ func RegisterFollower(c *gin.Context) {
 func DeregisterFollower(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
+	if len(splitToken) != 2 {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
 	token = splitToken[1]
 
 	status := verifyAccessToken(token)
@@ -220,6 +241,10 @@ func DeregisterFollower(c *gin.Context) {
 func GetJoinCommand(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
+	if len(splitToken) != 2 {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
 	token = splitToken[1]
 
 	status := verifyAccessToken(token)
@@ -239,6 +264,10 @@ func GetJoinCommand(c *gin.Context) {
 func GetAccessToken(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
+	if len(splitToken) != 2 {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
 	token = splitToken[1]
 
 	if contains(JoinTokens, token) {
@@ -260,7 +289,7 @@ func GetAccessToken(c *gin.Context) {
 
 func verifyAccessToken(token string) int {
 	if Client.Type == "Follower" {
-		status, _, err := comms.Get(Client.Leader.Host, Client.Leader.Port, "auth/check", AuthClient)
+		status, _, err := communication.Get(Client.Leader.Host, Client.Leader.Port, "auth/check", AuthClient)
 		if err != nil {
 			fmt.Printf("Encountered error: %v\n", err.Error())
 			return http.StatusInternalServerError
@@ -274,6 +303,10 @@ func verifyAccessToken(token string) int {
 func CheckAccessToken(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
+	if len(splitToken) != 2 {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
 	token = splitToken[1]
 
 	status := verifyAccessToken(token)
@@ -283,6 +316,10 @@ func CheckAccessToken(c *gin.Context) {
 func RefreshAccessToken(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
+	if len(splitToken) != 2 {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
 	token = splitToken[1]
 
 	newClient, err := auth.RefreshClient(token)
@@ -311,10 +348,62 @@ func HealthCheck() {
 	}
 }
 
+func GetBolt(c *gin.Context) {
+	token := c.Request.Header.Get("Authorization")
+	splitToken := strings.Split(token, "Bearer ")
+	if len(splitToken) != 2 {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
+	token = splitToken[1]
+
+	status := verifyAccessToken(token)
+	if status != http.StatusOK {
+		c.Status(status)
+		return
+	}
+
+	boltId := c.Param("id")
+
+	bolt, err := lightning.GetBolt(boltId)
+
+	if err != nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	c.JSON(http.StatusOK, bolt)
+}
+
+func PostBolt(c *gin.Context) {
+	token := c.Request.Header.Get("Authorization")
+	splitToken := strings.Split(token, "Bearer ")
+	if len(splitToken) != 2 {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
+	token = splitToken[1]
+
+	status := verifyAccessToken(token)
+	if status != http.StatusOK {
+		c.Status(status)
+		return
+	}
+
+	var boltConstructor lightning.BoltConstructor
+	c.BindJSON(&boltConstructor)
+
+	bolt, idx := lightning.CreateBolt(boltConstructor.Command)
+
+	go lightning.RunBolt(&lightning.Bolts[idx])
+
+	c.JSON(http.StatusOK, bolt)
+}
+
 func Initialize(joinToken string) error {
 	Client.Router = gin.Default()
 
-	InitializeRoutes()
+	InitializeRoutes(Client.Type)
 
 	Client.Server = &http.Server{
 		Addr:    ":" + strconv.Itoa(Client.Port),
@@ -334,7 +423,7 @@ func Initialize(joinToken string) error {
 		AuthClient = auth.ClientInformation{}
 		AuthClient.AccessToken = joinToken
 
-		status, body, err := comms.Get(Client.Leader.Host, Client.Leader.Port, "auth/token", AuthClient)
+		status, body, err := communication.Get(Client.Leader.Host, Client.Leader.Port, "auth/token", AuthClient)
 		if err != nil {
 			fmt.Printf("Encountered error: %v\n", err.Error())
 			return err
@@ -347,11 +436,11 @@ func Initialize(joinToken string) error {
 
 		auth.WriteClientInformation(AuthClient)
 
-		node := StormfrontNode{Host: Client.Host, Port: Client.Port}
+		node := StormfrontNode{ID: uuid.New().String(), Host: Client.Host, Port: Client.Port}
 
 		postBody, _ := json.Marshal(node)
 
-		status, _, err = comms.Post(Client.Leader.Host, Client.Leader.Port, "api/register", AuthClient, postBody)
+		status, _, err = communication.Post(Client.Leader.Host, Client.Leader.Port, "api/register", AuthClient, postBody)
 		if err != nil {
 			fmt.Printf("Encountered error: %v\n", err.Error())
 			return err

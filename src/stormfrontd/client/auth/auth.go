@@ -17,7 +17,6 @@ var AuthClients []ClientInformation
 
 type ClientInformation struct {
 	ID              string `json:"id"`
-	Secret          string `json:"secret"`
 	AccessToken     string `json:"access_token"`
 	RefreshToken    string `json:"refresh_token"`
 	TokenExpiration string `json:"token_expiration"`

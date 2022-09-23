@@ -2,29 +2,11 @@
   all_services:
     - stormfrontd
     - stormfront-cli
-  platforms:
-    - linux/amd64
-    - linux/arm64
-    - linux/arm/v7
-  docker_org: jfcarter2358
-build-docker:
-  help: Build docker images of VelociModel services
+build:
+  help: Build local binaries of all Stormfront services
   options:
     - name: -s,--services
-      help: Services to build docker images of
-      default: all
-      nargs: +
-  cmd: |
-    if 'all' in services:
-      services = all_services
-
-    for service in services:
-      docker build -t {service} -f src/{service}/Dockerfile .
-build-local:
-  help: Build local binaries of all VelociModel services
-  options:
-    - name: -s,--services
-      help: Services to build docker images of
+      help: Services to build local binaries of
       default: all
       nargs: +
   cmd: |
@@ -38,41 +20,12 @@ build-local:
       cd src/{service}
       env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -v -o {service}
       mkdir ../../dist/{service}
-      mv {service} ../../dist/{service}/{service}
-      if 'launch.sh' in os.listdir('.'):
-        cp launch.sh ../../dist/{service}/launch-{service}.sh
-        chmod +x ../../dist/{service}/launch-{service}.sh
+      if service == "stormfront-cli":
+        mv {service} ../../dist/{service}/stormfront
+        chmod +x ../../dist/{service}/stormfront
       else:
+        mv {service} ../../dist/{service}/{service}
         chmod +x ../../dist/{service}/{service}
-      cd ../..
-      if f'{service}' in os.listdir('data'):
-        cp -r data/{service} dist/{service}/data
-
-    print('Done!')
-bundle:
-  help: Bundle binary builds for use as release artifacts
-  options:
-    - name: -s,--services
-      help: Services to build docker images of
-      default: all
-      nargs: +
-  cmd: |
-    if 'all' in services:
-      services = all_services
-    
-    services_string = ' '.join(services)
-    stud build-local -s {services_string}
-    version = $(cat VERSION)
-
-    for service in services:
-      mv dist/{service} dist/{service}-{version}
-
-    mkdir -p release
-
-    for service in services:
-      cd dist/{service}-{version}
-      tar -czvf {service}-{version}.tar.gz *
-      cp {service}-{version}.tar.gz ../../release
       cd ../..
 
     print('Done!')
@@ -80,7 +33,6 @@ clean:
   help: Remove build and test artifacts
   cmd: |
     rm -r dist || true
-    rm -r release || true
 docs:
   help: Generate Stormfront documentation
   cmd: |

@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
 	"reflect"
@@ -29,17 +28,14 @@ func LoadConfig() {
 		configPath = DEFAULT_CONFIG_PATH
 	}
 
-	jsonFile, err := os.Open(configPath)
-	if err != nil {
-		log.Println("Unable to read json file")
-		panic(err)
+	Config = ConfigObject{
+		DaemonHost:          "localhost",
+		DaemonPort:          6674,
+		AllowedIPs:          []string{"127.0.0.1"},
+		RestrictRequestHost: true,
+		ClientPort:          6626,
+		InterfaceName:       "eth0",
 	}
-
-	log.Printf("Successfully Opened %v", configPath)
-
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-
-	json.Unmarshal(byteValue, &Config)
 
 	v := reflect.ValueOf(Config)
 	t := reflect.TypeOf(Config)
@@ -110,9 +106,6 @@ func LoadConfig() {
 			}
 		}
 	}
-
-	// defer the closing of our jsonFile so that we can parse it later on
-	defer jsonFile.Close()
 }
 
 func getAttr(obj interface{}, fieldName string) reflect.Value {

@@ -41,6 +41,7 @@ RUN chmod u+x /home/stormfrontd/start-stormfrontd.sh
 
 RUN mkdir -p /home/stormfrontd/data
 ADD data/stormfrontd/config.json /home/stormfrontd/data/config.json
+ADD src/stormfrontd/ui-dist /home/stormfrontd/ui
 
 RUN chown -R stormfrontd:stormfrontd /home/stormfrontd
 
@@ -48,4 +49,4 @@ USER stormfrontd
 
 WORKDIR /home/stormfrontd
 
-CMD ["./start-stormfrontd.sh"]
+CMD ["./stormfrontd"]
