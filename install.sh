@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-RELEASE_BODY=$(curl -s -H "Accept: application/vnd.github+json" -H "Authorization: Bearer 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" https://api.github.com/repos/jfcarter2358/stormfront/releases/latest)
+RELEASE_BODY=$(curl -s -H "Accept: application/vnd.github+json" https://api.github.com/repos/jfcarter2358/stormfront/releases/latest)
 
 # Download the daemon and the CLI
 for ASSET in $(echo "${RELEASE_BODY}" | jq -r '.assets[] | @base64'); do
@@ -15,7 +15,7 @@ for ASSET in $(echo "${RELEASE_BODY}" | jq -r '.assets[] | @base64'); do
 
     echo "Downloading ${NAME} from ${URL}"
 
-    curl -sL -H "Accept: application/octet-stream" -H "Authorization: Bearer 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" "${URL}" > /bin/"${NAME}"
+    curl -sL -H "Accept: application/octet-stream" "${URL}" > /bin/"${NAME}"
 
     chmod +x /bin/"${NAME}"
 done

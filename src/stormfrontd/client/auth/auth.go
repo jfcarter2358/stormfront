@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -34,11 +33,7 @@ func GenToken(n int) string {
 }
 
 func getDataDirectory() string {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatal(err)
-	}
-	dataDir := fmt.Sprintf("%s/.stormfront", homeDir)
+	dataDir := "/var/stormfront"
 	return dataDir
 }
 
