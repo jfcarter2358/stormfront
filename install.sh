@@ -40,6 +40,9 @@ EOF
 
     # Enable stormfront
     systemctl enable stormfront.service
+
+    # Start stormfront
+    systemctl start stormfront.service
 else
     # Write out our init script
     cat << EOF > /etc/init.d/stormfront
