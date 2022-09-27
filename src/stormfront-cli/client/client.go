@@ -9,8 +9,10 @@ import (
 
 var ClientHelpText = fmt.Sprintf(`usage: stormfront client <command> [-l|--log-level <log level>] [-h|--help]
 commands:
+	get-api-token     Get an API token for this stormfront cluster
 	health            Get the health of the stormfront client
 	join-command      Generate a join command to add a client as a follower
+	revoke-api-token  Revoke an existing API token for this stormfront cluster
 	status            Get the stormfront client status
 arguments:
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
@@ -44,6 +46,18 @@ func ParseClientArgs(args []string) {
 	}
 
 	switch args[1] {
+	case "get-api-token":
+		host, port, err := ParseGetAPITokenArgs(args[2:])
+		if err != nil {
+			logging.Error(err.Error())
+			fmt.Println(ClientHelpText)
+			os.Exit(1)
+		}
+		err = ExecuteGetAPIToken(host, port)
+		if err != nil {
+			logging.Error(err.Error())
+			os.Exit(1)
+		}
 	case "health":
 		host, port, err := ParseHealthArgs(args[2:])
 		if err != nil {
@@ -64,6 +78,18 @@ func ParseClientArgs(args []string) {
 			os.Exit(1)
 		}
 		err = ExecuteJoinCommand(host, port)
+		if err != nil {
+			logging.Error(err.Error())
+			os.Exit(1)
+		}
+	case "revoke-api-token":
+		token, host, port, err := ParseRevokeAPITokenArgs(args[2:])
+		if err != nil {
+			logging.Error(err.Error())
+			fmt.Println(ClientHelpText)
+			os.Exit(1)
+		}
+		err = ExecuteRevokeAPIToken(token, host, port)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)

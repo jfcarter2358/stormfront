@@ -33,19 +33,9 @@ RUN apk update \
 
 SHELL ["/bin/bash", "-c"]
 
-RUN mkdir /home/stormfrontd/data
-COPY data/stormfrontd /home/stormfrontd/data
-
-ADD src/stormfrontd/start-stormfrontd.sh /home/stormfrontd/start-stormfrontd.sh
-RUN chmod u+x /home/stormfrontd/start-stormfrontd.sh
-
-RUN mkdir -p /home/stormfrontd/data
-ADD data/stormfrontd/config.json /home/stormfrontd/data/config.json
-ADD src/stormfrontd/ui-dist /home/stormfrontd/ui
-
 RUN chown -R stormfrontd:stormfrontd /home/stormfrontd
 
-USER stormfrontd
+USER 0
 
 WORKDIR /home/stormfrontd
 

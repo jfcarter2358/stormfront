@@ -13,6 +13,7 @@ import (
 )
 
 var AuthClients []ClientInformation
+var APITokens []string
 
 type ClientInformation struct {
 	ID              string `json:"id"`
@@ -79,7 +80,7 @@ func ReadClientInformation() ClientInformation {
 	return clientInfo
 }
 
-func VerifyToken(token string) int {
+func VerifyAccessToken(token string) int {
 	for _, authClient := range AuthClients {
 		if token == authClient.AccessToken {
 			start, _ := time.Parse(time.RFC3339, authClient.TokenIssued)
@@ -87,6 +88,15 @@ func VerifyToken(token string) int {
 			if !inTimeSpan(start, end, time.Now()) {
 				return http.StatusNotAcceptable
 			}
+			return http.StatusOK
+		}
+	}
+	return http.StatusUnauthorized
+}
+
+func VerifyAPIToken(token string) int {
+	for _, apiToken := range APITokens {
+		if token == apiToken {
 			return http.StatusOK
 		}
 	}

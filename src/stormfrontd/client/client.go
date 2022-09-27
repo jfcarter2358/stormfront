@@ -30,6 +30,8 @@ type StormfrontClient struct {
 	Type       string           `json:"type"`
 	Leader     StormfrontNode   `json:"leader"`
 	Succession []StormfrontNode `json:"succession"`
+	Unhealthy  []StormfrontNode `json:"unhealthy"`
+	Unknown    []StormfrontNode `json:"unknown"`
 	Updated    string           `json:"updated"`
 	Host       string           `json:"host"`
 	Port       int              `json:"port"`
@@ -44,6 +46,20 @@ type StormfrontNode struct {
 	Port int    `json:"port"`
 }
 
+type StormfrontNodeType struct {
+	ID     string `json:"id"`
+	Host   string `json:"host"`
+	Port   int    `json:"port"`
+	Type   string `json:"type"`
+	Health string `json:"health"`
+}
+
+type StormfrontUpdatePackage struct {
+	AuthClients []auth.ClientInformation `json:"auth_clients"`
+	APITokens   []string                 `json:"api_tokens"`
+	Succession  []StormfrontNode         `json:"succession"`
+}
+
 func contains(s []string, e string) bool {
 	for _, a := range s {
 		if a == e {
@@ -51,6 +67,104 @@ func contains(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+func GetNodes(c *gin.Context) {
+	token := c.Request.Header.Get("X-Stormfront-API")
+
+	status := auth.VerifyAPIToken(token)
+	if status != http.StatusOK {
+		c.Status(status)
+		return
+	}
+
+	nodes := []StormfrontNodeType{}
+
+	nodes = append(nodes, StormfrontNodeType{
+		ID:     Client.Leader.ID,
+		Host:   Client.Leader.Host,
+		Port:   Client.Leader.Port,
+		Type:   "Leader",
+		Health: "Healthy",
+	})
+	for _, node := range Client.Succession {
+		nodes = append(nodes, StormfrontNodeType{
+			ID:     node.ID,
+			Host:   node.Host,
+			Port:   node.Port,
+			Type:   "Follower",
+			Health: "Healthy",
+		})
+	}
+	for _, node := range Client.Unhealthy {
+		nodes = append(nodes, StormfrontNodeType{
+			ID:     node.ID,
+			Host:   node.Host,
+			Port:   node.Port,
+			Type:   "Follower",
+			Health: "Unhealthy",
+		})
+	}
+	for _, node := range Client.Unknown {
+		nodes = append(nodes, StormfrontNodeType{
+			ID:     node.ID,
+			Host:   node.Host,
+			Port:   node.Port,
+			Type:   "Follower",
+			Health: "Unknown",
+		})
+	}
+
+	c.JSON(http.StatusOK, nodes)
+}
+
+func GetAPIToken(c *gin.Context) {
+	token := c.Request.Header.Get("Authorization")
+	splitToken := strings.Split(token, "Bearer ")
+	if len(splitToken) != 2 {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
+	token = splitToken[1]
+
+	status := verifyAccessToken(token)
+	if status != http.StatusOK {
+		c.Status(status)
+		return
+	}
+
+	apiToken := auth.GenToken(128)
+
+	auth.APITokens = append(auth.APITokens, apiToken)
+
+	c.JSON(http.StatusOK, gin.H{"token": apiToken})
+}
+
+func RevokeAPIToken(c *gin.Context) {
+	token := c.Request.Header.Get("Authorization")
+	splitToken := strings.Split(token, "Bearer ")
+	if len(splitToken) != 2 {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
+	token = splitToken[1]
+
+	status := verifyAccessToken(token)
+	if status != http.StatusOK {
+		c.Status(status)
+		return
+	}
+
+	apiToken := c.Request.Header.Get("X-Stormfront-API")
+
+	for idx, token := range auth.APITokens {
+		if token == apiToken {
+			auth.APITokens = append(auth.APITokens[:idx], auth.APITokens[idx+1:]...)
+			break
+		}
+	}
+
+	c.Status(http.StatusOK)
 }
 
 func GetHealth(c *gin.Context) {
@@ -109,21 +223,32 @@ func UpdateFollowerSuccession(c *gin.Context) {
 		return
 	}
 
-	var succession []StormfrontNode
-	c.BindJSON(&succession)
+	var updatePackage StormfrontUpdatePackage
+
+	c.BindJSON(&updatePackage)
 
 	currentTime := time.Now()
 	Client.Updated = currentTime.Format(time.RFC3339)
 
-	Client.Succession = succession
+	Client.Succession = updatePackage.Succession
+	auth.APITokens = updatePackage.APITokens
+	auth.AuthClients = updatePackage.AuthClients
 }
 
-func updateSuccession(successors []StormfrontNode) []StormfrontNode {
+func updateSuccession(successors []StormfrontNode) ([]StormfrontNode, []StormfrontNode, []StormfrontNode) {
 	AuthClient = auth.ReadClientInformation()
 
-	postBody, _ := json.Marshal(Client.Succession)
+	updatePackage := StormfrontUpdatePackage{
+		Succession:  Client.Succession,
+		APITokens:   auth.APITokens,
+		AuthClients: auth.AuthClients,
+	}
+
+	postBody, _ := json.Marshal(updatePackage)
 
 	newSuccession := []StormfrontNode{}
+	newUnhealthy := []StormfrontNode{}
+	newUnknown := []StormfrontNode{}
 
 	for _, successor := range successors {
 		foundSuccessor := false
@@ -145,6 +270,8 @@ func updateSuccession(successors []StormfrontNode) []StormfrontNode {
 		}
 		if foundSuccessor {
 			newSuccession = append(newSuccession, successor)
+		} else {
+			newUnknown = append(newUnknown, successor)
 		}
 	}
 
@@ -152,15 +279,18 @@ func updateSuccession(successors []StormfrontNode) []StormfrontNode {
 		status, _, err := communication.Post(successor.Host, successor.Port, "api/update/succession", AuthClient, postBody)
 		if err != nil {
 			fmt.Printf("Encountered error: %v\n", err.Error())
+			newUnhealthy = append(newUnhealthy, successor)
 			continue
-		}
-		if status != http.StatusOK {
-			fmt.Printf("Encountered non-200 status: %v\n", status)
-			continue
+		} else {
+			if status != http.StatusOK {
+				fmt.Printf("Encountered non-200 status: %v\n", status)
+				newUnhealthy = append(newUnhealthy, successor)
+				continue
+			}
 		}
 	}
 
-	return newSuccession
+	return newSuccession, newUnhealthy, newUnknown
 }
 
 func RegisterFollower(c *gin.Context) {
@@ -189,7 +319,7 @@ func RegisterFollower(c *gin.Context) {
 	}
 	SuccessionLock = true
 	Client.Succession = append(Client.Succession, follower)
-	Client.Succession = updateSuccession(Client.Succession)
+	Client.Succession, Client.Unhealthy, Client.Unknown = updateSuccession(append(Client.Succession, append(Client.Unknown, Client.Unhealthy...)...))
 	SuccessionLock = false
 
 	c.Status(http.StatusOK)
@@ -232,7 +362,7 @@ func DeregisterFollower(c *gin.Context) {
 	if removeIdx != -1 {
 		Client.Succession = append(Client.Succession[:removeIdx], Client.Succession[removeIdx+1:]...)
 	}
-	Client.Succession = updateSuccession(Client.Succession)
+	Client.Succession, Client.Unhealthy, Client.Unknown = updateSuccession(append(Client.Succession, append(Client.Unknown, Client.Unhealthy...)...))
 	SuccessionLock = false
 
 	c.Status(http.StatusOK)
@@ -242,21 +372,27 @@ func GetJoinCommand(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
 	if len(splitToken) != 2 {
-		c.Status(http.StatusUnauthorized)
-		return
-	}
-	token = splitToken[1]
+		token := c.Request.Header.Get("X-Stormfront-API")
 
-	status := verifyAccessToken(token)
-	if status != http.StatusOK {
-		c.Status(status)
-		return
+		status := auth.VerifyAPIToken(token)
+		if status != http.StatusOK {
+			c.Status(status)
+			return
+		}
+	} else {
+		token = splitToken[1]
+
+		status := verifyAccessToken(token)
+		if status != http.StatusOK {
+			c.Status(status)
+			return
+		}
 	}
 
 	joinToken := auth.GenToken(128)
 	JoinTokens = append(JoinTokens, joinToken)
 
-	joinCommand := fmt.Sprintf("./stormfront daemon join -L %s:%v -j %s", Client.Leader.Host, Client.Leader.Port, joinToken)
+	joinCommand := fmt.Sprintf("stormfront daemon join -L %s:%v -j %s", Client.Leader.Host, Client.Leader.Port, joinToken)
 
 	c.JSON(http.StatusOK, gin.H{"join_command": joinCommand})
 }
@@ -296,7 +432,7 @@ func verifyAccessToken(token string) int {
 		}
 		return status
 	}
-	tokenStatus := auth.VerifyToken(token)
+	tokenStatus := auth.VerifyAccessToken(token)
 	return tokenStatus
 }
 
@@ -337,7 +473,7 @@ func HealthCheck() {
 			time.Sleep(10 * time.Millisecond)
 		}
 		SuccessionLock = true
-		Client.Succession = updateSuccession(Client.Succession)
+		Client.Succession, Client.Unhealthy, Client.Unknown = updateSuccession(append(Client.Succession, append(Client.Unknown, Client.Unhealthy...)...))
 		SuccessionLock = false
 		time.Sleep(HEALTH_CHECK_DELAY * time.Second)
 	}
@@ -347,15 +483,21 @@ func GetBolt(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
 	if len(splitToken) != 2 {
-		c.Status(http.StatusUnauthorized)
-		return
-	}
-	token = splitToken[1]
+		token := c.Request.Header.Get("X-Stormfront-API")
 
-	status := verifyAccessToken(token)
-	if status != http.StatusOK {
-		c.Status(status)
-		return
+		status := auth.VerifyAPIToken(token)
+		if status != http.StatusOK {
+			c.Status(status)
+			return
+		}
+	} else {
+		token = splitToken[1]
+
+		status := verifyAccessToken(token)
+		if status != http.StatusOK {
+			c.Status(status)
+			return
+		}
 	}
 
 	boltId := c.Param("id")
@@ -374,15 +516,21 @@ func PostBolt(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
 	if len(splitToken) != 2 {
-		c.Status(http.StatusUnauthorized)
-		return
-	}
-	token = splitToken[1]
+		token := c.Request.Header.Get("X-Stormfront-API")
 
-	status := verifyAccessToken(token)
-	if status != http.StatusOK {
-		c.Status(status)
-		return
+		status := auth.VerifyAPIToken(token)
+		if status != http.StatusOK {
+			c.Status(status)
+			return
+		}
+	} else {
+		token = splitToken[1]
+
+		status := verifyAccessToken(token)
+		if status != http.StatusOK {
+			c.Status(status)
+			return
+		}
 	}
 
 	var boltConstructor lightning.BoltConstructor

@@ -13,6 +13,8 @@ import (
 	"stormfrontd/config"
 	"stormfrontd/utils"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func Deploy() error {
@@ -30,6 +32,7 @@ func Deploy() error {
 	client.Client = client.StormfrontClient{
 		Type: "Leader",
 		Leader: client.StormfrontNode{
+			ID:   uuid.NewString(),
 			Host: hostname,
 			Port: config.Config.ClientPort,
 		},
