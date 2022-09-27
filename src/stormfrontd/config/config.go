@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-const DEFAULT_CONFIG_PATH = "/home/stormfrontd/data/config.json"
+const DEFAULT_CONFIG_PATH = "/var/stormfront/config.json"
 const ENV_PREFIX = "STORMFRONTD_"
 
 type ConfigObject struct {
