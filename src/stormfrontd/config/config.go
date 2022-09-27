@@ -2,6 +2,8 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
+	"io/ioutil"
 	"log"
 	"os"
 	"reflect"
@@ -36,6 +38,24 @@ func LoadConfig() {
 		ClientPort:          6626,
 		InterfaceName:       "eth0",
 	}
+
+	if _, err := os.Stat(configPath); errors.Is(err, os.ErrNotExist) {
+		configData, _ := json.MarshalIndent(Config, "", " ")
+
+		_ = ioutil.WriteFile(configPath, configData, 0644)
+	}
+
+	jsonFile, err := os.Open(configPath)
+	if err != nil {
+		log.Println("Unable to read json file")
+		panic(err)
+	}
+
+	log.Printf("Successfully Opened %v", configPath)
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	json.Unmarshal(byteValue, &Config)
 
 	v := reflect.ValueOf(Config)
 	t := reflect.TypeOf(Config)
