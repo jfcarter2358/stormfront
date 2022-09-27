@@ -21,8 +21,6 @@ rm install.sh
 
 # Uninstall
 
-# Installation
-
 ```bash
 curl -s https://raw.githubusercontent.com/jfcarter2358/stormfront/main/uninstall.sh > uninstall.sh
 chmod +x uninstall.sh

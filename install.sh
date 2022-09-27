@@ -22,6 +22,10 @@ for ASSET in $(echo "${RELEASE_BODY}" | jq -r '.assets[] | @base64'); do
 done
 echo "Done!"
 
+echo "Creating data directory at /var/stormfront..."
+sudo mkdir -p /var/stormfront
+echo "Done!"
+
 if [[ "$(ps --no-headers -o comm 1)" == "systemd" ]]; then
     echo "Writing systemd files..."
     # Write out our service file for stormfront
