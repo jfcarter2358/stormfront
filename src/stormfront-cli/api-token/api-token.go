@@ -1,4 +1,4 @@
-package debug
+package api_token
 
 import (
 	"fmt"
@@ -7,14 +7,15 @@ import (
 	"stormfront-cli/utils"
 )
 
-var DebugHelpText = fmt.Sprintf(`usage: stormfront debug <command> [-l|--log-level <log level>] [-h|--help]
+var ClientHelpText = fmt.Sprintf(`usage: stormfront api-token <command> [-l|--log-level <log level>] [-h|--help]
 commands:
-	refresh           Refresh the client's access token
+	get               Get an API token for this stormfront cluster
+	revoke            Revoke an existing API token for this stormfront cluster
 arguments:
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.INFO_NAME)
 
-func ParseDebugArgs(args []string) {
+func ParseClientArgs(args []string) {
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
 	if present {
 		if err := logging.SetLevel(envLogLevel); err != nil {
@@ -37,32 +38,44 @@ func ParseDebugArgs(args []string) {
 
 	if len(args) == 2 {
 		if utils.Contains(args, "-h") || utils.Contains(args, "--help") {
-			fmt.Println(DebugHelpText)
+			fmt.Println(ClientHelpText)
 			os.Exit(0)
 		}
 	}
 
 	if len(args) == 1 {
-		fmt.Println(DebugHelpText)
+		fmt.Println(ClientHelpText)
 		os.Exit(1)
 	}
 
 	switch args[1] {
-	case "refresh":
-		host, port, err := ParseRefreshArgs(args[2:])
+	case "get":
+		host, port, err := ParseGetArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
-			fmt.Println(DebugHelpText)
+			fmt.Println(ClientHelpText)
 			os.Exit(1)
 		}
-		err = ExecuteRefresh(host, port)
+		err = ExecuteGet(host, port)
+		if err != nil {
+			logging.Error(err.Error())
+			os.Exit(1)
+		}
+	case "revoke":
+		token, host, port, err := ParseRevokeArgs(args[2:])
+		if err != nil {
+			logging.Error(err.Error())
+			fmt.Println(ClientHelpText)
+			os.Exit(1)
+		}
+		err = ExecuteRevoke(token, host, port)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)
 		}
 	default:
 		fmt.Printf("Invalid argument: %s\n", args[1])
-		fmt.Println(DebugHelpText)
+		fmt.Println(ClientHelpText)
 		os.Exit(1)
 	}
 

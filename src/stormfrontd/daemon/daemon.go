@@ -74,9 +74,9 @@ func Destroy() error {
 
 		clientInfo := auth.ReadClientInformation()
 
-		requestURL := fmt.Sprintf("http://%s:%v/api/deregister", client.Client.Leader.Host, client.Client.Leader.Port)
+		requestURL := fmt.Sprintf("http://%s:%v/api/register", client.Client.Leader.Host, client.Client.Leader.Port)
 		httpClient := &http.Client{}
-		req, _ := http.NewRequest("POST", requestURL, postBodyBuffer)
+		req, _ := http.NewRequest("DELETE", requestURL, postBodyBuffer)
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", clientInfo.AccessToken))
 		resp, err := httpClient.Do(req)
 		if err != nil {

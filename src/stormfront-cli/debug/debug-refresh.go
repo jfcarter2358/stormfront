@@ -21,6 +21,12 @@ arguments:
 func ParseRefreshArgs(args []string) (string, string, error) {
 	host := "localhost"
 	port := "6626"
+	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
+	if present {
+		if err := logging.SetLevel(envLogLevel); err != nil {
+			fmt.Printf("Env logging level %s (from STORMFRONT_LOG_LEVEL) is invalid, skipping", envLogLevel)
+		}
+	}
 
 	for len(args) > 0 {
 		switch args[0] {

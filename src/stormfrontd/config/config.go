@@ -14,12 +14,14 @@ const DEFAULT_CONFIG_PATH = "/var/stormfront/config.json"
 const ENV_PREFIX = "STORMFRONTD_"
 
 type ConfigObject struct {
-	DaemonHost          string   `json:"daemon_host" env:"DAEMON_HOST"`
-	DaemonPort          int      `json:"daemon_port" env:"DAEMON_PORT"`
-	AllowedIPs          []string `json:"allowed_ips" env:"ALLOWED_IPS"`
-	RestrictRequestHost bool     `json:"restrict_request_host" env:"RESTRICT_REQUEST_HOST"`
-	ClientPort          int      `json:"client_port" env:"CLIENT_PORT"`
-	InterfaceName       string   `json:"interface_name" env:"INTERFACE_NAME"`
+	DaemonHost               string   `json:"daemon_host" env:"DAEMON_HOST"`
+	DaemonPort               int      `json:"daemon_port" env:"DAEMON_PORT"`
+	AllowedIPs               []string `json:"allowed_ips" env:"ALLOWED_IPS"`
+	RestrictRequestHost      bool     `json:"restrict_request_host" env:"RESTRICT_REQUEST_HOST"`
+	ClientPort               int      `json:"client_port" env:"CLIENT_PORT"`
+	InterfaceName            string   `json:"interface_name" env:"INTERFACE_NAME"`
+	ReservedCPUPercentage    float64  `json:"reserved_cpu_percentage" env:"RESERVED_CPU_PERCENTAGE"`
+	ReservedMemoryPercentage float64  `json:"reserved_memory_percentage" env:"RESERVED_MEMORY_PERCENTAGE"`
 }
 
 var Config ConfigObject
@@ -31,12 +33,14 @@ func LoadConfig() {
 	}
 
 	Config = ConfigObject{
-		DaemonHost:          "localhost",
-		DaemonPort:          6674,
-		AllowedIPs:          []string{"127.0.0.1"},
-		RestrictRequestHost: true,
-		ClientPort:          6626,
-		InterfaceName:       "eth0",
+		DaemonHost:               "localhost",
+		DaemonPort:               6674,
+		AllowedIPs:               []string{"127.0.0.1"},
+		RestrictRequestHost:      true,
+		ClientPort:               6626,
+		InterfaceName:            "eth0",
+		ReservedCPUPercentage:    0.25,
+		ReservedMemoryPercentage: 0.25,
 	}
 
 	if _, err := os.Stat(configPath); errors.Is(err, os.ErrNotExist) {

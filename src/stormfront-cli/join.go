@@ -1,4 +1,4 @@
-package daemon
+package main
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-var DaemonJoinHelpText = fmt.Sprintf(`usage: stormfront daemon join -l <leader URL> -j <join-token> [-H <stormfront host>] [-p <stormfront port>] [-l <log level>] [-h|--help]
+var JoinHelpText = fmt.Sprintf(`usage: stormfront join -l <leader URL> -j <join-token> [-H <stormfront host>] [-p <stormfront port>] [-l <log level>] [-h|--help]
 arguments:
 	-H|--host          The host of the stormfront client to connect to, defaults to "localhost"
 	-p|--port          The port of the stormfront client to connect to, defaults to "6674"
@@ -27,6 +27,12 @@ func ParseJoinArgs(args []string) (string, string, string, string, error) {
 	port := "6674"
 	joinToken := ""
 	leader := ""
+	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
+	if present {
+		if err := logging.SetLevel(envLogLevel); err != nil {
+			fmt.Printf("Env logging level %s (from STORMFRONT_LOG_LEVEL) is invalid, skipping", envLogLevel)
+		}
+	}
 
 	for len(args) > 0 {
 		switch args[0] {
@@ -70,7 +76,7 @@ func ParseJoinArgs(args []string) (string, string, string, string, error) {
 			}
 		default:
 			fmt.Printf("Invalid argument: %s\n", args[0])
-			fmt.Println(DaemonJoinHelpText)
+			fmt.Println(JoinHelpText)
 			os.Exit(1)
 		}
 	}

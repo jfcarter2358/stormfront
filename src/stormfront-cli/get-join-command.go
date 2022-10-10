@@ -1,6 +1,7 @@
-package client
+package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -10,14 +11,14 @@ import (
 	"stormfront-cli/logging"
 )
 
-var ClientHealthHelpText = fmt.Sprintf(`usage: stormfront client health [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
+var GetJoinCommandHelpText = fmt.Sprintf(`usage: stormfront get-join-command [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
 arguments:
 	-H|--host         The host of the stormfront client to connect to, defaults to "localhost"
 	-p|--port         The port of the stormfront client to connect to, defaults to "6626"
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.INFO_NAME)
 
-func ParseHealthArgs(args []string) (string, string, error) {
+func ParseGetJoinCommandArgs(args []string) (string, string, error) {
 	host := "localhost"
 	port := "6626"
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
@@ -55,7 +56,7 @@ func ParseHealthArgs(args []string) (string, string, error) {
 			}
 		default:
 			fmt.Printf("Invalid argument: %s\n", args[0])
-			fmt.Println(ClientHealthHelpText)
+			fmt.Println(GetJoinCommandHelpText)
 			os.Exit(1)
 		}
 	}
@@ -63,10 +64,10 @@ func ParseHealthArgs(args []string) (string, string, error) {
 	return host, port, nil
 }
 
-func ExecuteHealth(host, port string) error {
+func ExecuteGetJoinCommand(host, port string) error {
 	logging.Info("Getting stormfront client health...")
 
-	requestURL := fmt.Sprintf("http://%s:%s/api/health", host, port)
+	requestURL := fmt.Sprintf("http://%s:%v/auth/join", host, port)
 
 	logging.Debug("Sending GET request to client...")
 	logging.Trace(fmt.Sprintf("Sending request to %s", requestURL))
@@ -95,9 +96,14 @@ func ExecuteHealth(host, port string) error {
 	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
 	if resp.StatusCode == http.StatusOK {
-		logging.Success("Client is healthy")
+
+		var data map[string]string
+		json.Unmarshal([]byte(responseBody), &data)
+
+		fmt.Println(data["join_command"])
+
 	} else {
-		logging.Fatal("Client is unhealthy")
+		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
 	}
 
 	return nil

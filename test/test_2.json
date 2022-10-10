@@ -1,0 +1,13 @@
+{
+    "name": "app-test-2",
+    "image": "app-test",
+    "hostname": "app-test-2",
+    "env": {
+        "FOO": "BAR"
+    },
+    "ports": {
+        "9999": "8888"
+    },
+    "memory": 268435456,
+    "cpu": 0.1
+}

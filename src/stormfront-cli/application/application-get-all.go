@@ -1,4 +1,4 @@
-package daemon
+package application
 
 import (
 	"errors"
@@ -6,19 +6,26 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"stormfront-cli/auth"
 	"stormfront-cli/logging"
 )
 
-var DaemonDestroyHelpText = fmt.Sprintf(`usage: stormfront daemon destroy [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
+var ApplicationGetAllHelpText = fmt.Sprintf(`usage: stormfront application get-all [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
 arguments:
-	-H|--host         The host of the stormfront daemon to connect to, defaults to "localhost"
-	-p|--port         The port of the stormfront daemon to connect to, defaults to "6674"
+	-H|--host         The host of the stormfront client to connect to, defaults to "localhost"
+	-p|--port         The port of the stormfront client to connect to, defaults to "6626"
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.INFO_NAME)
 
-func ParseDestroyArgs(args []string) (string, string, error) {
+func ParseGetAllArgs(args []string) (string, string, error) {
 	host := "localhost"
-	port := "6674"
+	port := "6626"
+	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
+	if present {
+		if err := logging.SetLevel(envLogLevel); err != nil {
+			fmt.Printf("Env logging level %s (from STORMFRONT_LOG_LEVEL) is invalid, skipping", envLogLevel)
+		}
+	}
 
 	for len(args) > 0 {
 		switch args[0] {
@@ -48,7 +55,7 @@ func ParseDestroyArgs(args []string) (string, string, error) {
 			}
 		default:
 			fmt.Printf("Invalid argument: %s\n", args[0])
-			fmt.Println(DaemonDestroyHelpText)
+			fmt.Println(ApplicationGetAllHelpText)
 			os.Exit(1)
 		}
 	}
@@ -56,29 +63,25 @@ func ParseDestroyArgs(args []string) (string, string, error) {
 	return host, port, nil
 }
 
-func ExecuteDestroy(host, port string) error {
-	logging.Info("Destroying stormfront node...")
+func ExecuteGetAll(host, port string) error {
+	logging.Info("Getting running applications...")
 
-	requestURL := fmt.Sprintf("http://%s:%s/api/destroy", host, port)
+	requestURL := fmt.Sprintf("http://%s:%s/api/application", host, port)
 
-	httpClient := &http.Client{}
-
-	// Create request
-	logging.Debug("Sending DELETE request to daemon...")
+	logging.Debug("Sending GET request to client...")
 	logging.Trace(fmt.Sprintf("Sending request to %s", requestURL))
 
-	req, err := http.NewRequest("DELETE", requestURL, nil)
+	clientInfo := auth.ReadClientInformation()
+
+	httpClient := &http.Client{}
+	req, _ := http.NewRequest("GET", requestURL, nil)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", clientInfo.AccessToken))
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}
 
 	logging.Debug("Done!")
-
-	// Fetch Request
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return err
-	}
 
 	defer resp.Body.Close()
 	//Read the response body
@@ -89,8 +92,8 @@ func ExecuteDestroy(host, port string) error {
 	responseBody := string(body)
 
 	logging.Debug(fmt.Sprintf("Status code: %v", resp.StatusCode))
-	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
-	logging.Success("Done!")
+	fmt.Println(responseBody)
+
 	return nil
 }

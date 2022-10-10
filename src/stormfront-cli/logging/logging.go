@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	NONE_NAME    string = "NONE"
 	FATAL_NAME   string = "FATAL"
 	SUCCESS_NAME string = "SUCCESS"
 	ERROR_NAME   string = "ERROR"
@@ -17,6 +18,7 @@ const (
 )
 
 const (
+	NONE_LEVEL    int = -1
 	FATAL_LEVEL   int = 0
 	SUCCESS_LEVEL int = 1
 	ERROR_LEVEL   int = 2
@@ -29,11 +31,13 @@ const (
 var Level = INFO_LEVEL
 
 func GetDefaults() string {
-	return fmt.Sprintf("%s, %s, %s, %s, %s, %s, %s", FATAL_NAME, SUCCESS_NAME, ERROR_NAME, WARN_NAME, INFO_NAME, DEBUG_NAME, TRACE_NAME)
+	return fmt.Sprintf("%s, %s, %s, %s, %s, %s, %s, %s", NONE_NAME, FATAL_NAME, SUCCESS_NAME, ERROR_NAME, WARN_NAME, INFO_NAME, DEBUG_NAME, TRACE_NAME)
 }
 
 func SetLevel(level string) error {
 	switch level {
+	case NONE_NAME:
+		Level = NONE_LEVEL
 	case FATAL_NAME:
 		Level = FATAL_LEVEL
 	case SUCCESS_NAME:

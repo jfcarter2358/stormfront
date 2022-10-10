@@ -1,26 +1,32 @@
-package daemon
+package api_token
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"stormfront-cli/auth"
 	"stormfront-cli/logging"
 )
 
-var DaemonRestartHelpText = fmt.Sprintf(`usage: stormfront daemon restart [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
+var APITokenGetHelpText = fmt.Sprintf(`usage: stormfront api-token get [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
 arguments:
-	-H|--host         The host of the stormfront daemon to connect to, defaults to "localhost"
-	-p|--port         The port of the stormfront daemon to connect to, defaults to "6674"
+	-H|--host         The host of the stormfront client to connect to, defaults to "localhost"
+	-p|--port         The port of the stormfront client to connect to, defaults to "6626"
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.INFO_NAME)
 
-func ParseRestartArgs(args []string) (string, string, error) {
+func ParseGetArgs(args []string) (string, string, error) {
 	host := "localhost"
-	port := "6674"
+	port := "6626"
+	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
+	if present {
+		if err := logging.SetLevel(envLogLevel); err != nil {
+			fmt.Printf("Env logging level %s (from STORMFRONT_LOG_LEVEL) is invalid, skipping", envLogLevel)
+		}
+	}
 
 	for len(args) > 0 {
 		switch args[0] {
@@ -50,7 +56,7 @@ func ParseRestartArgs(args []string) (string, string, error) {
 			}
 		default:
 			fmt.Printf("Invalid argument: %s\n", args[0])
-			fmt.Println(DaemonRestartHelpText)
+			fmt.Println(APITokenGetHelpText)
 			os.Exit(1)
 		}
 	}
@@ -58,18 +64,20 @@ func ParseRestartArgs(args []string) (string, string, error) {
 	return host, port, nil
 }
 
-func ExecuteRestart(host, port string) error {
-	logging.Info("Restarting stormfront node...")
+func ExecuteGet(host, port string) error {
+	logging.Info("Getting stormfront client health...")
 
-	requestURL := fmt.Sprintf("http://%s:%s/api/restart", host, port)
+	requestURL := fmt.Sprintf("http://%s:%s/auth/api", host, port)
 
-	logging.Debug("Sending POST request to daemon...")
+	logging.Debug("Sending GET request to client...")
 	logging.Trace(fmt.Sprintf("Sending request to %s", requestURL))
 
-	postBody, _ := json.Marshal(map[string]string{})
-	postBodyBuffer := bytes.NewBuffer(postBody)
+	clientInfo := auth.ReadClientInformation()
 
-	resp, err := http.Post(requestURL, "application/json", postBodyBuffer)
+	httpClient := &http.Client{}
+	req, _ := http.NewRequest("GET", requestURL, nil)
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", clientInfo.AccessToken))
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -87,7 +95,13 @@ func ExecuteRestart(host, port string) error {
 	logging.Debug(fmt.Sprintf("Status code: %v", resp.StatusCode))
 	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
-	logging.Success("Done!")
+	if resp.StatusCode == http.StatusOK {
+		responseJSON := map[string]string{}
+		json.Unmarshal(body, &responseJSON)
+		fmt.Println(responseJSON["token"])
+	} else {
+		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
+	}
 
 	return nil
 }

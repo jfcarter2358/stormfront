@@ -1,4 +1,4 @@
-package client
+package application
 
 import (
 	"errors"
@@ -10,27 +10,33 @@ import (
 	"stormfront-cli/logging"
 )
 
-var ClientRevokeAPITokenHelpText = fmt.Sprintf(`usage: stormfront client revoke-api-token -t <token> [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
+var ApplicationGetHelpText = fmt.Sprintf(`usage: stormfront application get [-i|--id <application id>] [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
 arguments:
-	-t|--token        The API token to revoke
+	-i|--id           The ID of the application to get
 	-H|--host         The host of the stormfront client to connect to, defaults to "localhost"
 	-p|--port         The port of the stormfront client to connect to, defaults to "6626"
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.INFO_NAME)
 
-func ParseRevokeAPITokenArgs(args []string) (string, string, string, error) {
+func ParseGetArgs(args []string) (string, string, string, error) {
 	host := "localhost"
 	port := "6626"
-	token := ""
+	id := ""
+	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
+	if present {
+		if err := logging.SetLevel(envLogLevel); err != nil {
+			fmt.Printf("Env logging level %s (from STORMFRONT_LOG_LEVEL) is invalid, skipping", envLogLevel)
+		}
+	}
 
 	for len(args) > 0 {
 		switch args[0] {
-		case "-t", "--token":
+		case "-i", "--id":
 			if len(args) > 1 {
-				token = args[1]
+				id = args[1]
 				args = args[2:]
 			} else {
-				return "", "", "", errors.New("no value passed after token flag")
+				return "", "", "", errors.New("no value passed after id flag")
 			}
 		case "-H", "--host":
 			if len(args) > 1 {
@@ -58,32 +64,27 @@ func ParseRevokeAPITokenArgs(args []string) (string, string, string, error) {
 			}
 		default:
 			fmt.Printf("Invalid argument: %s\n", args[0])
-			fmt.Println(ClientStateHelpText)
+			fmt.Println(ApplicationGetHelpText)
 			os.Exit(1)
 		}
 	}
 
-	if token == "" {
-		return "", "", "", errors.New("no token passed to revoke")
-	}
-
-	return token, host, port, nil
+	return host, port, id, nil
 }
 
-func ExecuteRevokeAPIToken(token, host, port string) error {
-	logging.Info("Getting stormfront client health...")
+func ExecuteGet(host, port, id string) error {
+	logging.Info("Getting application...")
 
-	requestURL := fmt.Sprintf("http://%s:%s/auth/api", host, port)
+	requestURL := fmt.Sprintf("http://%s:%s/api/application/%s", host, port, id)
 
-	logging.Debug("Sending DELETE request to client...")
+	logging.Debug("Sending GET request to client...")
 	logging.Trace(fmt.Sprintf("Sending request to %s", requestURL))
 
 	clientInfo := auth.ReadClientInformation()
 
 	httpClient := &http.Client{}
-	req, _ := http.NewRequest("DELETE", requestURL, nil)
+	req, _ := http.NewRequest("GET", requestURL, nil)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", clientInfo.AccessToken))
-	req.Header.Set("X-Stormfront-API", token)
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
@@ -100,13 +101,8 @@ func ExecuteRevokeAPIToken(token, host, port string) error {
 	responseBody := string(body)
 
 	logging.Debug(fmt.Sprintf("Status code: %v", resp.StatusCode))
-	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
-	if resp.StatusCode == http.StatusOK {
-		logging.Success("API token revoked")
-	} else {
-		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
-	}
+	fmt.Println(responseBody)
 
 	return nil
 }

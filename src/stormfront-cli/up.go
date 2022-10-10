@@ -1,4 +1,4 @@
-package daemon
+package main
 
 import (
 	"bytes"
@@ -11,16 +11,22 @@ import (
 	"stormfront-cli/logging"
 )
 
-var DaemonDeployHelpText = fmt.Sprintf(`usage: stormfront daemon deploy [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
+var UpHelpText = fmt.Sprintf(`usage: stormfront deploy [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
 arguments:
 	-H|--host         The host of the stormfront daemon to connect to, defaults to "localhost"
 	-p|--port         The port of the stormfront daemon to connect to, defaults to "6674"
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.INFO_NAME)
 
-func ParseDeployArgs(args []string) (string, string, error) {
+func ParseUpArgs(args []string) (string, string, error) {
 	host := "localhost"
 	port := "6674"
+	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
+	if present {
+		if err := logging.SetLevel(envLogLevel); err != nil {
+			fmt.Printf("Env logging level %s (from STORMFRONT_LOG_LEVEL) is invalid, skipping", envLogLevel)
+		}
+	}
 
 	for len(args) > 0 {
 		switch args[0] {
@@ -50,7 +56,7 @@ func ParseDeployArgs(args []string) (string, string, error) {
 			}
 		default:
 			fmt.Printf("Invalid argument: %s\n", args[0])
-			fmt.Println(DaemonDeployHelpText)
+			fmt.Println(UpHelpText)
 			os.Exit(1)
 		}
 	}
@@ -58,7 +64,7 @@ func ParseDeployArgs(args []string) (string, string, error) {
 	return host, port, nil
 }
 
-func ExecuteDeploy(host, port string) error {
+func ExecuteUp(host, port string) error {
 	logging.Info("Deploying stormfront node...")
 
 	requestURL := fmt.Sprintf("http://%s:%s/api/deploy", host, port)

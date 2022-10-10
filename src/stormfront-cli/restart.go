@@ -1,26 +1,32 @@
-package client
+package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"stormfront-cli/auth"
 	"stormfront-cli/logging"
 )
 
-var ClientJoinCommandHelpText = fmt.Sprintf(`usage: stormfront client join-command [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
+var RestartHelpText = fmt.Sprintf(`usage: stormfront restart [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
 arguments:
-	-H|--host         The host of the stormfront client to connect to, defaults to "localhost"
-	-p|--port         The port of the stormfront client to connect to, defaults to "6626"
+	-H|--host         The host of the stormfront daemon to connect to, defaults to "localhost"
+	-p|--port         The port of the stormfront daemon to connect to, defaults to "6674"
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.INFO_NAME)
 
-func ParseJoinCommandArgs(args []string) (string, string, error) {
+func ParseRestartArgs(args []string) (string, string, error) {
 	host := "localhost"
-	port := "6626"
+	port := "6674"
+	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
+	if present {
+		if err := logging.SetLevel(envLogLevel); err != nil {
+			fmt.Printf("Env logging level %s (from STORMFRONT_LOG_LEVEL) is invalid, skipping", envLogLevel)
+		}
+	}
 
 	for len(args) > 0 {
 		switch args[0] {
@@ -50,7 +56,7 @@ func ParseJoinCommandArgs(args []string) (string, string, error) {
 			}
 		default:
 			fmt.Printf("Invalid argument: %s\n", args[0])
-			fmt.Println(ClientStateHelpText)
+			fmt.Println(RestartHelpText)
 			os.Exit(1)
 		}
 	}
@@ -58,20 +64,18 @@ func ParseJoinCommandArgs(args []string) (string, string, error) {
 	return host, port, nil
 }
 
-func ExecuteJoinCommand(host, port string) error {
-	logging.Info("Getting stormfront client health...")
+func ExecuteRestart(host, port string) error {
+	logging.Info("Restarting stormfront node...")
 
-	requestURL := fmt.Sprintf("http://%s:%v/auth/join", host, port)
+	requestURL := fmt.Sprintf("http://%s:%s/api/restart", host, port)
 
-	logging.Debug("Sending GET request to client...")
+	logging.Debug("Sending POST request to daemon...")
 	logging.Trace(fmt.Sprintf("Sending request to %s", requestURL))
 
-	clientInfo := auth.ReadClientInformation()
+	postBody, _ := json.Marshal(map[string]string{})
+	postBodyBuffer := bytes.NewBuffer(postBody)
 
-	httpClient := &http.Client{}
-	req, _ := http.NewRequest("GET", requestURL, nil)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", clientInfo.AccessToken))
-	resp, err := httpClient.Do(req)
+	resp, err := http.Post(requestURL, "application/json", postBodyBuffer)
 	if err != nil {
 		return err
 	}
@@ -89,16 +93,7 @@ func ExecuteJoinCommand(host, port string) error {
 	logging.Debug(fmt.Sprintf("Status code: %v", resp.StatusCode))
 	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
-	if resp.StatusCode == http.StatusOK {
-
-		var data map[string]string
-		json.Unmarshal([]byte(responseBody), &data)
-
-		fmt.Println(data["join_command"])
-
-	} else {
-		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
-	}
+	logging.Success("Done!")
 
 	return nil
 }

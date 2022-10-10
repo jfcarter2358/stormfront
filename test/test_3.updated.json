@@ -1,0 +1,17 @@
+{
+    "name": "app-test-3",
+    "image": "centos/postgresql-94-centos7:9.4",
+    "hostname": "app-test-3",
+    "env": {
+        "POSTGRESQL_DATABASE": "foobar",
+        "POSTGRESQL_ADMIN_PASSWORD": "MyCoolAdm1nP4$$w0rd",
+        "POSTGRESQL_USER": "foobar",
+        "POSTGRESQL_PASSWORD": "MyCoolAdm1nP4$$w0rd",
+        "FOO": "BAR"
+    },
+    "ports": {
+        "5432": "5432"
+    },
+    "memory": 268435456,
+    "cpu": 0.1
+}

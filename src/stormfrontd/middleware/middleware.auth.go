@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"stormfrontd/client/auth"
 	"stormfrontd/config"
 	"stormfrontd/utils"
 
@@ -24,5 +25,31 @@ func EnsureLocalhost() gin.HandlerFunc {
 				return
 			}
 		}
+	}
+}
+
+func CheckTokenAuthentication() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.Request.Header.Get("Authorization")
+		splitToken := strings.Split(token, "Bearer ")
+		if len(splitToken) != 2 {
+			token := c.Request.Header.Get("X-Stormfront-API")
+
+			status := auth.VerifyAPIToken(token)
+			if status != http.StatusOK {
+				c.Status(status)
+				return
+			}
+		} else {
+			token = splitToken[1]
+
+			status := auth.VerifyAccessToken(token)
+			if status != http.StatusOK {
+				c.Status(status)
+				return
+			}
+		}
+
+		c.Next()
 	}
 }
