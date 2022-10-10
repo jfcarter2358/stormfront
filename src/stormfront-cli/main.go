@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"stormfront-cli/api_token"
 	"stormfront-cli/application"
 	"stormfront-cli/client"
 	"stormfront-cli/daemon"
@@ -13,6 +14,7 @@ import (
 
 var HelpText = fmt.Sprintf(`usage: stormfront <command> [-l|--log-level <log level>] [-h|--help]
 commands:
+	api-token           Manage cluster API tokens
 	app                 Manage applications deployed to Stormfront
 	client              Interact with a running client
 	daemon              Interact with the stormfront daemon
@@ -63,6 +65,8 @@ func main() {
 	}
 
 	switch args[1] {
+	case "api-token":
+		api_token.ParseAPITokenArgs(args[1:])
 	case "app":
 		application.ParseApplicationArgs(args[1:])
 	case "daemon":

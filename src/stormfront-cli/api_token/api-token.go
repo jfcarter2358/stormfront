@@ -7,7 +7,7 @@ import (
 	"stormfront-cli/utils"
 )
 
-var ClientHelpText = fmt.Sprintf(`usage: stormfront api-token <command> [-l|--log-level <log level>] [-h|--help]
+var APITokenHelpText = fmt.Sprintf(`usage: stormfront api-token <command> [-l|--log-level <log level>] [-h|--help]
 commands:
 	get               Get an API token for this stormfront cluster
 	revoke            Revoke an existing API token for this stormfront cluster
@@ -15,7 +15,7 @@ arguments:
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.INFO_NAME)
 
-func ParseClientArgs(args []string) {
+func ParseAPITokenArgs(args []string) {
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
 	if present {
 		if err := logging.SetLevel(envLogLevel); err != nil {
@@ -38,13 +38,13 @@ func ParseClientArgs(args []string) {
 
 	if len(args) == 2 {
 		if utils.Contains(args, "-h") || utils.Contains(args, "--help") {
-			fmt.Println(ClientHelpText)
+			fmt.Println(APITokenHelpText)
 			os.Exit(0)
 		}
 	}
 
 	if len(args) == 1 {
-		fmt.Println(ClientHelpText)
+		fmt.Println(APITokenHelpText)
 		os.Exit(1)
 	}
 
@@ -53,7 +53,7 @@ func ParseClientArgs(args []string) {
 		host, port, err := ParseGetArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
-			fmt.Println(ClientHelpText)
+			fmt.Println(APITokenHelpText)
 			os.Exit(1)
 		}
 		err = ExecuteGet(host, port)
@@ -65,7 +65,7 @@ func ParseClientArgs(args []string) {
 		token, host, port, err := ParseRevokeArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
-			fmt.Println(ClientHelpText)
+			fmt.Println(APITokenHelpText)
 			os.Exit(1)
 		}
 		err = ExecuteRevoke(token, host, port)
@@ -75,7 +75,7 @@ func ParseClientArgs(args []string) {
 		}
 	default:
 		fmt.Printf("Invalid argument: %s\n", args[1])
-		fmt.Println(ClientHelpText)
+		fmt.Println(APITokenHelpText)
 		os.Exit(1)
 	}
 
