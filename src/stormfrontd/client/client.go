@@ -57,6 +57,8 @@ type StormfrontSystemInfo struct {
 	Cores           int     `json:"cores"`
 	TotalMemory     int     `json:"total_memory"`
 	FreeMemory      int     `json:"free_memory"`
+	TotalDiskSpace  int     `json:"total_disk"`
+	FreeDiskSpace   int     `json:"free_disk"`
 }
 
 type StormfrontNode struct {
@@ -391,6 +393,10 @@ func updateSystemInfo() error {
 			cpuReserved += application.CPU
 		}
 	}
+
+	diskInfo := DiskUsage("/")
+	systemInfo.FreeDiskSpace = int(diskInfo.Free)
+	systemInfo.TotalDiskSpace = int(diskInfo.All)
 
 	memoryUsed := (float64(systemInfo.TotalMemory) * config.Config.ReservedMemoryPercentage) + float64(memoryReserved)
 	systemInfo.MemoryAvailable = systemInfo.TotalMemory - int(memoryUsed)
