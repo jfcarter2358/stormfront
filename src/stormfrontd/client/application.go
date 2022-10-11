@@ -164,7 +164,9 @@ func reconcileApplications(updatePackage StormfrontUpdatePackage) {
 			}
 		}
 		if shouldBeDeployed {
-			deployApplication(definedApp)
+			if definedApp.Node == Client.ID {
+				deployApplication(definedApp)
+			}
 		}
 	}
 
