@@ -309,6 +309,35 @@ func UpdateApplication(c *gin.Context) {
 	c.Status(http.StatusNotFound)
 }
 
+func GetApplicationLogs(c *gin.Context) {
+	id := c.Param("id")
+
+	if Client.Type != "Leader" {
+		c.Redirect(http.StatusFound, fmt.Sprintf("http://%s:%v/api/application/%s/logs", Client.Leader.Host, Client.Leader.Port, id))
+		return
+	}
+
+	for _, app := range Applications {
+		if app.ID == id {
+			cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("docker logs %s", app.Name))
+			var outb bytes.Buffer
+			cmd.Stdout = &outb
+			err := cmd.Run()
+			if err != nil {
+				fmt.Printf("Encountered error getting container logs: %v\n", err.Error())
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+
+			logs := outb.String()
+			c.JSON(http.StatusOK, gin.H{"logs": logs})
+			return
+		}
+	}
+
+	c.Status(http.StatusNotFound)
+}
+
 func GetAPIToken(c *gin.Context) {
 	apiToken := auth.GenToken(128)
 
@@ -390,35 +419,6 @@ func GetHealth(c *gin.Context) {
 
 func GetState(c *gin.Context) {
 	c.JSON(http.StatusOK, Client)
-}
-
-func GetApplicationLogs(c *gin.Context) {
-	id := c.Param("id")
-
-	if Client.Type != "Leader" {
-		c.Redirect(http.StatusFound, fmt.Sprintf("http://%s:%v/api/application/%s/logs", Client.Leader.Host, Client.Leader.Port, id))
-		return
-	}
-
-	for _, app := range Applications {
-		if app.ID == id {
-			cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("docker logs %s", app.Name))
-			var outb bytes.Buffer
-			cmd.Stdout = &outb
-			err := cmd.Run()
-			if err != nil {
-				fmt.Printf("Encountered error getting container logs: %v\n", err.Error())
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
-
-			logs := outb.String()
-			c.JSON(http.StatusOK, gin.H{"logs": logs})
-			return
-		}
-	}
-
-	c.Status(http.StatusNotFound)
 }
 
 func UpdateState(c *gin.Context) {
