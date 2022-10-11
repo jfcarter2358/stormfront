@@ -718,8 +718,6 @@ func Initialize(joinToken string) error {
 		Handler: Client.Router,
 	}
 
-	Client.ID = uuid.New().String()
-
 	Running = true
 
 	// Start serving the application
@@ -730,6 +728,8 @@ func Initialize(joinToken string) error {
 	}()
 
 	if Client.Type == "Follower" {
+		Client.ID = uuid.New().String()
+
 		AuthClient = auth.ClientInformation{}
 		AuthClient.AccessToken = joinToken
 
@@ -759,6 +759,7 @@ func Initialize(joinToken string) error {
 			return fmt.Errorf("unable to contact client at %s:%v, received status code %v", Client.Leader.Host, Client.Leader.Port, status)
 		}
 	} else {
+		Client.ID = Client.Leader.ID
 		AuthClient = auth.CreateClientInformation()
 		auth.WriteClientInformation(AuthClient)
 
