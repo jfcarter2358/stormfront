@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -97,6 +98,16 @@ func ExecuteDown(host, port string) error {
 	logging.Debug(fmt.Sprintf("Status code: %v", resp.StatusCode))
 	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
-	logging.Success("Done!")
+	if resp.StatusCode == http.StatusOK {
+		logging.Success("Done!")
+	} else {
+		var data map[string]string
+		if err := json.Unmarshal([]byte(responseBody), &data); err == nil {
+			if errMessage, ok := data["error"]; ok {
+				logging.Error(errMessage)
+			}
+		}
+		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
+	}
 	return nil
 }

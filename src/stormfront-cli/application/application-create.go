@@ -113,8 +113,20 @@ func ExecuteCreate(host, port, definition string) error {
 	responseBody := string(body)
 
 	logging.Debug(fmt.Sprintf("Status code: %v", resp.StatusCode))
+	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
-	fmt.Println(responseBody)
+	if resp.StatusCode == http.StatusOK {
+		fmt.Println(responseBody)
+		logging.Success("Done!")
+	} else {
+		var data map[string]string
+		if err := json.Unmarshal([]byte(responseBody), &data); err == nil {
+			if errMessage, ok := data["error"]; ok {
+				logging.Error(errMessage)
+			}
+		}
+		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
+	}
 
 	return nil
 }

@@ -95,9 +95,21 @@ func ExecuteRefresh(host, port string) error {
 	logging.Debug(fmt.Sprintf("Status code: %v", resp.StatusCode))
 	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
-	json.Unmarshal(body, &clientInfo)
+	if resp.StatusCode == http.StatusOK {
+		json.Unmarshal(body, &clientInfo)
 
-	err = auth.WriteClientInformation(clientInfo)
+		err = auth.WriteClientInformation(clientInfo)
 
-	return err
+		return err
+	} else {
+		var data map[string]string
+		if err := json.Unmarshal([]byte(responseBody), &data); err == nil {
+			if errMessage, ok := data["error"]; ok {
+				logging.Error(errMessage)
+			}
+		}
+		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
+	}
+
+	return fmt.Errorf("client has returned error with status code %v", resp.StatusCode)
 }

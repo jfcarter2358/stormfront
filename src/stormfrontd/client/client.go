@@ -527,7 +527,30 @@ func updateFollowers(successors []StormfrontNode) ([]StormfrontNode, []Stormfron
 	Applications = getApplicationStatus(Applications)
 	Client.Applications = append([]StormfrontApplication(nil), Applications...)
 
+	newSuccession = dedupeNodes(newSuccession)
+	newUnhealthy = dedupeNodes(newUnhealthy)
+	newUnknown = dedupeNodes(newUnknown)
+
 	return newSuccession, newUnhealthy, newUnknown
+}
+
+func dedupeNodes(nodes []StormfrontNode) []StormfrontNode {
+	out := []StormfrontNode{}
+
+	for _, node := range nodes {
+		shouldAdd := true
+		for _, uniqueNode := range out {
+			if node.ID == uniqueNode.ID {
+				shouldAdd = false
+				break
+			}
+		}
+		if shouldAdd {
+			out = append(out, node)
+		}
+	}
+
+	return out
 }
 
 func RegisterFollower(c *gin.Context) {

@@ -99,7 +99,14 @@ func ExecuteGet(host, port string) error {
 		responseJSON := map[string]string{}
 		json.Unmarshal(body, &responseJSON)
 		fmt.Println(responseJSON["token"])
+		logging.Success("Done!")
 	} else {
+		var data map[string]string
+		if err := json.Unmarshal([]byte(responseBody), &data); err == nil {
+			if errMessage, ok := data["error"]; ok {
+				logging.Error(errMessage)
+			}
+		}
 		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
 	}
 

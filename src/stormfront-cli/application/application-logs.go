@@ -101,14 +101,23 @@ func ExecuteLogs(host, port, id string) error {
 	}
 	responseBody := string(body)
 
-	responseData := map[string]string{}
-
-	json.Unmarshal(body, &responseData)
-
 	logging.Debug(fmt.Sprintf("Status code: %v", resp.StatusCode))
-	logging.Debug(responseBody)
+	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
-	fmt.Println(responseData["logs"])
+	if resp.StatusCode == http.StatusOK {
+		responseJSON := map[string]string{}
+		json.Unmarshal(body, &responseJSON)
+		fmt.Println(responseJSON["logs"])
+		logging.Success("Done!")
+	} else {
+		var data map[string]string
+		if err := json.Unmarshal([]byte(responseBody), &data); err == nil {
+			if errMessage, ok := data["error"]; ok {
+				logging.Error(errMessage)
+			}
+		}
+		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
+	}
 
 	return nil
 }

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -97,6 +98,13 @@ func ExecuteHealth(host, port string) error {
 	if resp.StatusCode == http.StatusOK {
 		logging.Success("Client is healthy")
 	} else {
+		var data map[string]string
+		if err := json.Unmarshal([]byte(responseBody), &data); err == nil {
+			if errMessage, ok := data["error"]; ok {
+				logging.Error(errMessage)
+			}
+		}
+		logging.Error(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
 		logging.Fatal("Client is unhealthy")
 	}
 

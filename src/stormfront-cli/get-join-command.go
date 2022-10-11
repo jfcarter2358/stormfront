@@ -96,13 +96,16 @@ func ExecuteGetJoinCommand(host, port string) error {
 	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
 	if resp.StatusCode == http.StatusOK {
-
 		var data map[string]string
 		json.Unmarshal([]byte(responseBody), &data)
-
 		fmt.Println(data["join_command"])
-
 	} else {
+		var data map[string]string
+		if err := json.Unmarshal([]byte(responseBody), &data); err == nil {
+			if errMessage, ok := data["error"]; ok {
+				logging.Error(errMessage)
+			}
+		}
 		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
 	}
 
