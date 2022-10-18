@@ -170,12 +170,26 @@ func CreateApplication(c *gin.Context) {
 			}
 		}
 	}
-	for _, node := range nodes {
-		if node.System.CPUAvailable >= app.CPU && node.System.MemoryAvailable >= app.Memory {
-			app.Node = node.ID
-			Applications = append(Applications, app)
-			c.Status(http.StatusCreated)
-			return
+	if app.Node != "" {
+		for _, node := range nodes {
+			if node.ID != app.Node {
+				continue
+			}
+			if node.System.CPUAvailable >= app.CPU && node.System.MemoryAvailable >= app.Memory {
+				app.Node = node.ID
+				Applications = append(Applications, app)
+				c.Status(http.StatusCreated)
+				return
+			}
+		}
+	} else {
+		for _, node := range nodes {
+			if node.System.CPUAvailable >= app.CPU && node.System.MemoryAvailable >= app.Memory {
+				app.Node = node.ID
+				Applications = append(Applications, app)
+				c.Status(http.StatusCreated)
+				return
+			}
 		}
 	}
 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Insufficient resources to schedule"})
