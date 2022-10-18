@@ -145,7 +145,7 @@ func CreateApplication(c *gin.Context) {
 
 	if Client.Type != "Leader" {
 		fmt.Printf("Node is not leader, redirecting to http://%s:%v/api/application\n", Client.Leader.Host, Client.Leader.Port)
-		c.Redirect(http.StatusFound, fmt.Sprintf("http://%s:%v/api/application", Client.Leader.Host, Client.Leader.Port))
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/application", Client.Leader.Host, Client.Leader.Port))
 		return
 	}
 
@@ -203,7 +203,7 @@ func GetLocalApplications(c *gin.Context) {
 func GetAllApplications(c *gin.Context) {
 
 	if Client.Type != "Leader" {
-		c.Redirect(http.StatusFound, fmt.Sprintf("http://%s:%v/api/application", Client.Leader.Host, Client.Leader.Port))
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/application", Client.Leader.Host, Client.Leader.Port))
 		return
 	}
 
@@ -214,7 +214,7 @@ func GetApplication(c *gin.Context) {
 	id := c.Param("id")
 
 	if Client.Type != "Leader" {
-		c.Redirect(http.StatusFound, fmt.Sprintf("http://%s:%v/api/application/%s", Client.Leader.Host, Client.Leader.Port, id))
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/application/%s", Client.Leader.Host, Client.Leader.Port, id))
 		return
 	}
 
@@ -232,7 +232,7 @@ func DeleteApplication(c *gin.Context) {
 	id := c.Param("id")
 
 	if Client.Type != "Leader" {
-		c.Redirect(http.StatusFound, fmt.Sprintf("http://%s:%v/api/application/%s", Client.Leader.Host, Client.Leader.Port, id))
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/application/%s", Client.Leader.Host, Client.Leader.Port, id))
 		return
 	}
 
@@ -253,7 +253,7 @@ func UpdateApplication(c *gin.Context) {
 	id := c.Param("id")
 
 	if Client.Type != "Leader" {
-		c.Redirect(http.StatusFound, fmt.Sprintf("http://%s:%v/api/application/%s", Client.Leader.Host, Client.Leader.Port, id))
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/application/%s", Client.Leader.Host, Client.Leader.Port, id))
 		return
 	}
 
@@ -330,7 +330,7 @@ func GetApplicationLogs(c *gin.Context) {
 	id := c.Param("id")
 
 	if Client.Type != "Leader" {
-		c.Redirect(http.StatusFound, fmt.Sprintf("http://%s:%v/api/application/%s/logs", Client.Leader.Host, Client.Leader.Port, id))
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/application/%s/logs", Client.Leader.Host, Client.Leader.Port, id))
 		return
 	}
 
