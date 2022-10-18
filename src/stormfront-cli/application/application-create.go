@@ -115,7 +115,7 @@ func ExecuteCreate(host, port, definition string) error {
 	logging.Debug(fmt.Sprintf("Status code: %v", resp.StatusCode))
 	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
-	if resp.StatusCode == http.StatusOK {
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusCreated {
 		fmt.Println(responseBody)
 		logging.Success("Done!")
 	} else {

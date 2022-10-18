@@ -45,8 +45,8 @@ func getApplicationStatus(apps []StormfrontApplication) []StormfrontApplication 
 						app.Status.CPU = parts[1]
 						app.Status.Memory = parts[2]
 						apps[idx] = app
+						break
 					}
-					break
 				}
 			} else {
 				break

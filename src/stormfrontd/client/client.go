@@ -144,6 +144,7 @@ func GetNodes(c *gin.Context) {
 func CreateApplication(c *gin.Context) {
 
 	if Client.Type != "Leader" {
+		fmt.Printf("Node is not leader, redirecting to http://%s:%v/api/application\n", Client.Leader.Host, Client.Leader.Port)
 		c.Redirect(http.StatusFound, fmt.Sprintf("http://%s:%v/api/application", Client.Leader.Host, Client.Leader.Port))
 		return
 	}
@@ -525,7 +526,7 @@ func updateFollowers(successors []StormfrontNode) ([]StormfrontNode, []Stormfron
 
 	for _, localApp := range localApplications {
 		for idx, app := range Applications {
-			fmt.Println("Updating status!")
+			fmt.Printf("Updating status for %s\n!", app.Name)
 			if app.ID == localApp.ID {
 				app.Status = localApp.Status
 				Applications[idx] = app
