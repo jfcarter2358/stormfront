@@ -458,6 +458,7 @@ func updateFollowers(successors []StormfrontNode) ([]StormfrontNode, []Stormfron
 
 	postBody, _ := json.Marshal(updatePackage)
 
+	tempSuccession := []StormfrontNode{}
 	newSuccession := []StormfrontNode{}
 	newUnhealthy := []StormfrontNode{}
 	newUnknown := []StormfrontNode{}
@@ -482,13 +483,14 @@ func updateFollowers(successors []StormfrontNode) ([]StormfrontNode, []Stormfron
 			break
 		}
 		if foundSuccessor {
-			newSuccession = append(newSuccession, successor)
+			tempSuccession = append(tempSuccession, successor)
 		} else {
 			newUnknown = append(newUnknown, successor)
 		}
 	}
 
-	for _, successor := range newSuccession {
+	// TODO: Remove from newSuccession if it gets marked as unhealth
+	for _, successor := range tempSuccession {
 		status, _, err := communication.Post(successor.Host, successor.Port, "api/state", AuthClient, postBody)
 		if err != nil {
 			fmt.Printf("Encountered error: %v\n", err.Error())
@@ -513,6 +515,7 @@ func updateFollowers(successors []StormfrontNode) ([]StormfrontNode, []Stormfron
 				continue
 			}
 		}
+		newSuccession = append(newSuccession, successor)
 		successorApplications := []StormfrontApplication{}
 		json.Unmarshal([]byte(responseBody), &successorApplications)
 		localApplications = append(localApplications, successorApplications...)

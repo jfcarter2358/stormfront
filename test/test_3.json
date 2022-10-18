@@ -1,12 +1,11 @@
 {
     "name": "app-test-3",
-    "image": "centos/postgresql-94-centos7:9.4",
+    "image": "postgres:alpine",
     "hostname": "app-test-3",
     "env": {
-        "POSTGRESQL_DATABASE": "foobar",
-        "POSTGRESQL_ADMIN_PASSWORD": "MyCoolAdm1nP4$$w0rd",
-        "POSTGRESQL_USER": "foobar",
-        "POSTGRESQL_PASSWORD": "MyCoolAdm1nP4$$w0rd"
+        "POSTGRES_DB": "foobar",
+        "POSTGRES_USER": "foobar",
+        "POSTGRES_PASSWORD": "MyCoolAdm1nP4$$w0rd"
     },
     "ports": {
         "5432": "5432"

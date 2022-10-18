@@ -200,10 +200,12 @@ func reconcileApplications(updatePackage StormfrontUpdatePackage) {
 
 	// Update /etc/hosts for running applications
 	for _, definedApp := range updatePackage.Applications {
-		err = exec.Command("/bin/sh", "-c", fmt.Sprintf("docker exec -u 0 %s sh -c \"echo \\\"$(cat /var/stormfront/%s.hosts)\\n$(cat /var/stormfront/hosts)\\\" > /etc/hosts\"", definedApp.Name, definedApp.Name)).Run()
-		if err != nil {
-			fmt.Printf("Encountered error copying to hosts file: %v\n", err.Error())
-			continue
+		if Client.ID == definedApp.ID {
+			err = exec.Command("/bin/sh", "-c", fmt.Sprintf("docker exec -u 0 %s sh -c \"echo \\\"$(cat /var/stormfront/%s.hosts)\\n$(cat /var/stormfront/hosts)\\\" > /etc/hosts\"", definedApp.Name, definedApp.Name)).Run()
+			if err != nil {
+				fmt.Printf("Encountered error copying to hosts file: %v\n", err.Error())
+				continue
+			}
 		}
 	}
 }

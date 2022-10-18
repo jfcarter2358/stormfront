@@ -78,7 +78,7 @@ func ParseRevokeArgs(args []string) (string, string, string, error) {
 }
 
 func ExecuteRevoke(token, host, port string) error {
-	logging.Info("Getting stormfront client health...")
+	logging.Info("Revoking API token...")
 
 	requestURL := fmt.Sprintf("http://%s:%s/auth/api", host, port)
 

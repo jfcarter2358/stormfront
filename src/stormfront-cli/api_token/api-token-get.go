@@ -65,7 +65,7 @@ func ParseGetArgs(args []string) (string, string, error) {
 }
 
 func ExecuteGet(host, port string) error {
-	logging.Info("Getting stormfront client health...")
+	logging.Info("Getting API token...")
 
 	requestURL := fmt.Sprintf("http://%s:%s/auth/api", host, port)
 
