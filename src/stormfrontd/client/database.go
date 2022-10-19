@@ -7,6 +7,9 @@ import (
 	"github.com/jfcarter2358/ceresdb-go/connection"
 )
 
+const CERESDB_USERNAME = "ceresdb"
+const CERESDB_PORT = 7437
+
 var Collections = map[string]string{
 	"auth":        `{"id":"STRING","access_token":"STRING","refresh_token":"STRING","token_expiration":"STRING","token_issued":"STRING"}`,
 	"api":         `{"token":"STRING"}`,
@@ -16,7 +19,7 @@ var Collections = map[string]string{
 
 func CreateDatabases() error {
 	fmt.Println("Initializing CeresDB connection")
-	connection.Initialize(CERESDB_USERNAME, config.Config.CeresDBPassword, CERESDB_HOST, CERESDB_PORT)
+	connection.Initialize(CERESDB_USERNAME, config.Config.CeresDBPassword, Client.Host, CERESDB_PORT)
 	fmt.Println("Done!")
 
 	fmt.Printf("Username: %s\n", connection.Username)

@@ -47,7 +47,7 @@ func updateApplicationStatus() error {
 			fmt.Printf("Unable to update database with status for application %s", app.ID)
 		}
 	}
-	connection.Host = "localhost"
+	connection.Host = Client.Host
 	return nil
 }
 

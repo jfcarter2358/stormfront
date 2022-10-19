@@ -27,10 +27,6 @@ const HEALTH_CHECK_DELAY = 10
 const UPDATE_RETRY_DELAY = 1
 const UPDATE_MAX_TRIES = 3
 
-const CERESDB_USERNAME = "ceresdb"
-const CERESDB_HOST = "localhost"
-const CERESDB_PORT = 7437
-
 type StormfrontClient struct {
 	ID           string                  `json:"id"`
 	Type         string                  `json:"type"`
