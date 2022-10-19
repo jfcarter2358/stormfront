@@ -27,7 +27,7 @@ func ParseCreateArgs(args []string) (string, string, string, error) {
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
 	if present {
 		if err := logging.SetLevel(envLogLevel); err != nil {
-			fmt.Printf("Env logging level %s (from STORMFRONT_LOG_LEVEL) is invalid, skipping", envLogLevel)
+			fmt.Printf("Env logging level %s (from STORMFRONT_LOG_LEVEL) is invalid, skipping\n", envLogLevel)
 		}
 	}
 
@@ -116,7 +116,6 @@ func ExecuteCreate(host, port, definition string) error {
 	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
 	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusCreated {
-		fmt.Println(responseBody)
 		logging.Success("Done!")
 	} else {
 		var data map[string]string

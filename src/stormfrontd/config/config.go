@@ -22,6 +22,7 @@ type ConfigObject struct {
 	InterfaceName            string   `json:"interface_name" env:"INTERFACE_NAME"`
 	ReservedCPUPercentage    float64  `json:"reserved_cpu_percentage" env:"RESERVED_CPU_PERCENTAGE"`
 	ReservedMemoryPercentage float64  `json:"reserved_memory_percentage" env:"RESERVED_MEMORY_PERCENTAGE"`
+	CeresDBPassword          string   `json:"ceresdb_password" env:"CERESDB_PASSWORD"`
 }
 
 var Config ConfigObject
@@ -41,6 +42,7 @@ func LoadConfig() {
 		InterfaceName:            "eth0",
 		ReservedCPUPercentage:    0.25,
 		ReservedMemoryPercentage: 0.25,
+		CeresDBPassword:          "ceresdb",
 	}
 
 	if _, err := os.Stat(configPath); errors.Is(err, os.ErrNotExist) {

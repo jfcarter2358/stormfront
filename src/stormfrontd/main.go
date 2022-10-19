@@ -22,7 +22,7 @@ func main() {
 
 	routerPort := ":" + strconv.Itoa(config.Config.DaemonPort)
 
-	fmt.Printf("Running with port: %v", config.Config.DaemonPort)
+	fmt.Printf("Running with port: %v\n", config.Config.DaemonPort)
 
 	api.Healthy = true
 

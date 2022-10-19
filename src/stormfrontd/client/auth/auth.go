@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jfcarter2358/ceresdb-go/connection"
 )
 
 var AuthClients []ClientInformation
@@ -81,15 +82,19 @@ func ReadClientInformation() ClientInformation {
 }
 
 func VerifyAccessToken(token string) int {
-	for _, authClient := range AuthClients {
-		if token == authClient.AccessToken {
-			start, _ := time.Parse(time.RFC3339, authClient.TokenIssued)
-			end, _ := time.Parse(time.RFC3339, authClient.TokenExpiration)
-			if !inTimeSpan(start, end, time.Now()) {
-				return http.StatusNotAcceptable
-			}
-			return http.StatusOK
+	data, err := connection.Query(fmt.Sprintf(`get record stormfront.auth | filter access_token = "%s"`, token))
+	if err != nil {
+		return http.StatusInternalServerError
+	}
+	if len(data) > 0 {
+		issued := data[0]["token_issued"].(string)
+		expiration := data[0]["token_expiration"].(string)
+		start, _ := time.Parse(time.RFC3339, issued)
+		end, _ := time.Parse(time.RFC3339, expiration)
+		if !inTimeSpan(start, end, time.Now()) {
+			return http.StatusNotAcceptable
 		}
+		return http.StatusOK
 	}
 	return http.StatusUnauthorized
 }
@@ -104,18 +109,31 @@ func VerifyAPIToken(token string) int {
 }
 
 func RefreshClient(token string) (ClientInformation, error) {
-	for idx, authClient := range AuthClients {
-		if token == authClient.RefreshToken {
-			rand.Seed(time.Now().UnixNano())
-			currentTime := time.Now()
-			expiration := currentTime.Add(time.Hour * 6)
-			authClient.AccessToken = GenToken(128)
-			authClient.RefreshToken = GenToken(128)
-			authClient.TokenIssued = currentTime.Format(time.RFC3339)
-			authClient.TokenExpiration = expiration.Format(time.RFC3339)
-			AuthClients[idx] = authClient
-			return authClient, nil
-		}
+	data, err := connection.Query(fmt.Sprintf(`get record stormfront.auth | filter refresh_token = "%s"`, token))
+	if err != nil {
+		return ClientInformation{}, fmt.Errorf("database error: %v", err)
 	}
-	return ClientInformation{}, fmt.Errorf("no client with refresh token exists")
+	if len(data) == 0 {
+		return ClientInformation{}, fmt.Errorf("no auth information with refresh token exists")
+	}
+	rand.Seed(time.Now().UnixNano())
+	currentTime := time.Now()
+	expiration := currentTime.Add(time.Hour * 6)
+	authClient := ClientInformation{}
+
+	data[0]["access_token"] = GenToken(128)
+	data[0]["refresh_token"] = GenToken(128)
+	data[0]["token_issued"] = currentTime.Format(time.RFC3339)
+	data[0]["token_expiration"] = expiration.Format(time.RFC3339)
+
+	authData, _ := json.Marshal(data[0])
+
+	json.Unmarshal(authData, &authClient)
+
+	_, err = connection.Query(fmt.Sprintf(`put record stormfront.auth %s`, string(authData)))
+	if err != nil {
+		return ClientInformation{}, fmt.Errorf("database error: %v", err)
+	}
+
+	return authClient, nil
 }

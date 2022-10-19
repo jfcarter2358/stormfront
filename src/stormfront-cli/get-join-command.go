@@ -65,7 +65,7 @@ func ParseGetJoinCommandArgs(args []string) (string, string, error) {
 }
 
 func ExecuteGetJoinCommand(host, port string) error {
-	logging.Info("Getting stormfront client health...")
+	logging.Info("Getting join command from leader...")
 
 	requestURL := fmt.Sprintf("http://%s:%v/auth/join", host, port)
 
@@ -99,6 +99,7 @@ func ExecuteGetJoinCommand(host, port string) error {
 		var data map[string]string
 		json.Unmarshal([]byte(responseBody), &data)
 		fmt.Println(data["join_command"])
+		logging.Success("Done!")
 	} else {
 		var data map[string]string
 		if err := json.Unmarshal([]byte(responseBody), &data); err == nil {

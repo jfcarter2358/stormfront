@@ -11,6 +11,7 @@ import (
 	"stormfrontd/client"
 	"stormfrontd/client/auth"
 	"stormfrontd/config"
+	"stormfrontd/database"
 	"stormfrontd/utils"
 	"time"
 
@@ -43,6 +44,13 @@ func Deploy() error {
 		Healthy:    true,
 	}
 
+	err = database.Deploy("")
+
+	if err != nil {
+		database.Destroy()
+		return err
+	}
+
 	err = client.Initialize("")
 
 	if err != nil {
@@ -65,6 +73,8 @@ func Destroy() error {
 		log.Printf("Server forced to shutdown: %v", err)
 		return err
 	}
+
+	database.Destroy()
 
 	if client.Client.Type == "Follower" {
 		node := client.StormfrontNode{Host: client.Client.Host, Port: client.Client.Port}
@@ -111,6 +121,13 @@ func Join(leaderHost string, leaderPort int, joinToken string) error {
 		Host:       hostname,
 		Port:       config.Config.ClientPort,
 		Healthy:    true,
+	}
+
+	err = database.Deploy(fmt.Sprintf("%s:%d", leaderHost, leaderPort))
+
+	if err != nil {
+		database.Destroy()
+		return err
 	}
 
 	err = client.Initialize(joinToken)

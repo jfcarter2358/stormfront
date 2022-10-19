@@ -2,11 +2,14 @@ package client
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"reflect"
 	"strings"
+
+	"github.com/jfcarter2358/ceresdb-go/connection"
 )
 
 type StormfrontApplication struct {
@@ -28,8 +31,32 @@ type StormfrontApplicationStatus struct {
 	Status string `json:"status"`
 }
 
-func getApplicationStatus(apps []StormfrontApplication) []StormfrontApplication {
-	cmd := exec.Command("/bin/sh", "-c", "docker stats --no-stream --no-trunc --all --format \"{{.Name}}||{{.CPUPerc}}||{{.MemPerc}}\"")
+func updateApplicationStatus() error {
+	data, err := connection.Query("get record stormfront.application")
+	if err != nil {
+		return err
+	}
+	connection.Host = Client.Leader.Host
+	for _, appMap := range data {
+		var app StormfrontApplication
+		appBytes, _ := json.Marshal(appMap)
+		json.Unmarshal(appBytes, &app)
+		status, cpu, memory := getApplicationStatus(app)
+		_, err := connection.Query(fmt.Sprintf(`patch record stormfront.application '%s' {"status":"%s","cpu":"%s","memory":"%s"}`, appMap[".id"].(string), status, cpu, memory))
+		if err != nil {
+			fmt.Printf("Unable to update database with status for application %s", app.ID)
+		}
+	}
+	connection.Host = "localhost"
+	return nil
+}
+
+func getApplicationStatus(app StormfrontApplication) (string, string, string) { // status, cpu, memory
+	status := ""
+	cpu := ""
+	memory := ""
+
+	cmd := exec.Command("/bin/sh", "-c", "docker stats --no-stream --no-trunc --all --format \"{{.CPUPerc}}||{{.MemPerc}}\"")
 	var outb1 bytes.Buffer
 	cmd.Stdout = &outb1
 	err := cmd.Run()
@@ -37,19 +64,15 @@ func getApplicationStatus(apps []StormfrontApplication) []StormfrontApplication 
 		fmt.Printf("Encountered error getting container stats: %v\n", err.Error())
 	} else {
 		lines := strings.Split(outb1.String(), "\n")
-		for _, line := range lines {
-			parts := strings.Split(line, "||")
-			if len(parts) == 3 {
-				for idx, app := range apps {
-					if app.Name == parts[0] {
-						app.Status.CPU = parts[1]
-						app.Status.Memory = parts[2]
-						apps[idx] = app
-						break
-					}
+		if len(lines) > 1 {
+			for _, line := range lines {
+				parts := strings.Split(line, "||")
+				if len(parts) == 2 {
+					cpu = parts[0]
+					memory = parts[1]
+				} else {
+					break
 				}
-			} else {
-				break
 			}
 		}
 	}
@@ -62,23 +85,19 @@ func getApplicationStatus(apps []StormfrontApplication) []StormfrontApplication 
 		fmt.Printf("Encountered error getting container stats: %v\n", err.Error())
 	} else {
 		lines := strings.Split(outb2.String(), "\n")
-		for _, line := range lines {
-			parts := strings.Split(line, "||")
-			if len(parts) == 2 {
-				for idx, app := range apps {
-					if app.Name == parts[0] {
-						app.Status.Status = strings.Split(parts[1], " ")[0]
-						apps[idx] = app
-					}
+		if len(lines) > 1 {
+			for _, line := range lines {
+				parts := strings.Split(line, "||")
+				if len(parts) == 2 {
+					status = parts[1]
+				} else {
 					break
 				}
-			} else {
-				break
 			}
 		}
 	}
 
-	return apps
+	return status, cpu, memory
 }
 
 func deployApplication(app StormfrontApplication) {
@@ -143,19 +162,30 @@ func destroyApplication(app StormfrontApplication) {
 	}
 }
 
-func reconcileApplications(updatePackage StormfrontUpdatePackage) {
+func reconcileApplications() {
+	var definedApplications []StormfrontApplication
+	data, err := connection.Query("get record stormfront.application")
+
+	if err != nil {
+		fmt.Printf("Unable to contact database: %v\n", err)
+		return
+	}
+
+	dataBytes, _ := json.Marshal(data)
+	json.Unmarshal(dataBytes, &definedApplications)
+
 	hostContents := ""
-	for _, definedApp := range updatePackage.Applications {
+	for _, definedApp := range definedApplications {
 		hostContents += fmt.Sprintf("%s %s\n", Client.Host, definedApp.Hostname)
 	}
 
-	err := os.WriteFile("/var/stormfront/hosts", []byte(hostContents), 0644)
+	err = os.WriteFile("/var/stormfront/hosts", []byte(hostContents), 0644)
 	if err != nil {
 		panic(err)
 	}
 
 	// Check for applications that should be deployed
-	for _, definedApp := range updatePackage.Applications {
+	for _, definedApp := range definedApplications {
 		shouldBeDeployed := true
 		for _, runningApp := range Client.Applications {
 			if definedApp.ID == runningApp.ID {
@@ -173,7 +203,7 @@ func reconcileApplications(updatePackage StormfrontUpdatePackage) {
 	// Check for applications that should be torn down
 	for _, runningApp := range Client.Applications {
 		shouldBeDestroyed := true
-		for _, definedApp := range updatePackage.Applications {
+		for _, definedApp := range definedApplications {
 			if definedApp.ID == runningApp.ID {
 				shouldBeDestroyed = false
 				break
@@ -187,7 +217,7 @@ func reconcileApplications(updatePackage StormfrontUpdatePackage) {
 	}
 
 	for _, runningApp := range Client.Applications {
-		for _, definedApp := range updatePackage.Applications {
+		for _, definedApp := range definedApplications {
 			if runningApp.ID == definedApp.ID {
 				if !reflect.DeepEqual(runningApp.Env, definedApp.Env) || runningApp.Image != definedApp.Image || !reflect.DeepEqual(runningApp.Ports, definedApp.Ports) {
 					fmt.Printf("Performing application update for %s\n", runningApp.Name)
@@ -199,7 +229,7 @@ func reconcileApplications(updatePackage StormfrontUpdatePackage) {
 	}
 
 	// Update /etc/hosts for running applications
-	for _, definedApp := range updatePackage.Applications {
+	for _, definedApp := range definedApplications {
 		if Client.ID == definedApp.ID {
 			err = exec.Command("/bin/sh", "-c", fmt.Sprintf("docker exec -u 0 %s sh -c \"echo \\\"$(cat /var/stormfront/%s.hosts)\\n$(cat /var/stormfront/hosts)\\\" > /etc/hosts\"", definedApp.Name, definedApp.Name)).Run()
 			if err != nil {
