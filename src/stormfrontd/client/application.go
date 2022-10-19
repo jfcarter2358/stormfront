@@ -114,7 +114,7 @@ func deployApplication(app StormfrontApplication) {
 		fmt.Printf("Could not find /var/stormfront/%s.cid file, skipping removal\n", app.Name)
 	}
 
-	dockerCommand := "docker run -d --rm "
+	dockerCommand := "docker run --net host -d --rm "
 	dockerCommand += fmt.Sprintf("--name %s ", app.Name)
 	dockerCommand += fmt.Sprintf("--cidfile /var/stormfront/%s.cid ", app.Name)
 	dockerCommand += fmt.Sprintf("--cpus=\"%f\" ", app.CPU)

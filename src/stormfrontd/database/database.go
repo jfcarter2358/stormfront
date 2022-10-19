@@ -13,7 +13,7 @@ func Deploy(leader string) error {
 	os.MkdirAll("/var/stormfront/ceresdb/data", os.ModePerm)
 	os.MkdirAll("/var/stormfront/ceresdb/indices", os.ModePerm)
 	fmt.Println("Deploying CeresDB...")
-	dockerCommand := "docker run -d --rm "
+	dockerCommand := "docker run --net host -d --rm "
 	dockerCommand += "--name ceresdb "
 	dockerCommand += fmt.Sprintf("-e CERESDB_DEFAULT_ADMIN_PASSWORD=%s ", config.Config.CeresDBPassword)
 	if leader != "" {
