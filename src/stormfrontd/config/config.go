@@ -23,6 +23,7 @@ type ConfigObject struct {
 	ReservedCPUPercentage    float64  `json:"reserved_cpu_percentage" env:"RESERVED_CPU_PERCENTAGE"`
 	ReservedMemoryPercentage float64  `json:"reserved_memory_percentage" env:"RESERVED_MEMORY_PERCENTAGE"`
 	CeresDBPassword          string   `json:"ceresdb_password" env:"CERESDB_PASSWORD"`
+	ContainerEngine          string   `json:"container_engine" env:"CONTAINER_ENGINE"`
 }
 
 var Config ConfigObject
@@ -43,6 +44,7 @@ func LoadConfig() {
 		ReservedCPUPercentage:    0.25,
 		ReservedMemoryPercentage: 0.25,
 		CeresDBPassword:          "ceresdb",
+		ContainerEngine:          "docker",
 	}
 
 	if _, err := os.Stat(configPath); errors.Is(err, os.ErrNotExist) {

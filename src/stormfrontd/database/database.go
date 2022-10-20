@@ -13,7 +13,7 @@ func Deploy(leader string) error {
 	os.MkdirAll("/var/stormfront/ceresdb/data", os.ModePerm)
 	os.MkdirAll("/var/stormfront/ceresdb/indices", os.ModePerm)
 	fmt.Println("Deploying CeresDB...")
-	dockerCommand := "docker run --net host -d --rm "
+	dockerCommand := fmt.Sprintf("%s run --net host -d --rm ", config.Config.ContainerEngine)
 	dockerCommand += "--name ceresdb "
 	dockerCommand += fmt.Sprintf("-e CERESDB_DEFAULT_ADMIN_PASSWORD=%s ", config.Config.CeresDBPassword)
 	if leader != "" {
@@ -33,9 +33,9 @@ func Deploy(leader string) error {
 }
 
 func Destroy() error {
-	err := exec.Command("/bin/sh", "-c", "docker kill ceresdb").Run()
+	err := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill ceresdb", config.Config.ContainerEngine)).Run()
 	if err != nil {
-		fmt.Printf("Encountered error killing docker container: %v\n", err.Error())
+		fmt.Printf("Encountered error killing container: %v\n", err.Error())
 		return err
 	}
 	err = os.RemoveAll("/var/stormfront/ceresdb")

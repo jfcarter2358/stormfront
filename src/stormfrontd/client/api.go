@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os/exec"
 	"stormfrontd/client/auth"
+	"stormfrontd/config"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -410,7 +411,7 @@ func GetApplicationLogs(c *gin.Context) {
 
 	app := data[0]
 
-	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("docker logs %s", app["name"].(string)))
+	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s logs %s", config.Config.ContainerEngine, app["name"].(string)))
 	var outb bytes.Buffer
 	cmd.Stdout = &outb
 	err = cmd.Run()

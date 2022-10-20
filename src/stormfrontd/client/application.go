@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"stormfrontd/config"
 	"strings"
 
 	"github.com/jfcarter2358/ceresdb-go/connection"
@@ -56,7 +57,7 @@ func getApplicationStatus(app StormfrontApplication) (string, string, string) { 
 	cpu := ""
 	memory := ""
 
-	cmd := exec.Command("/bin/sh", "-c", "docker stats --no-stream --no-trunc --all --format \"{{.CPUPerc}}||{{.MemPerc}}\"")
+	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s stats --no-stream --no-trunc --all --format \"{{.CPUPerc}}||{{.MemPerc}}\"", config.Config.ContainerEngine))
 	var outb1 bytes.Buffer
 	cmd.Stdout = &outb1
 	err := cmd.Run()
@@ -77,7 +78,7 @@ func getApplicationStatus(app StormfrontApplication) (string, string, string) { 
 		}
 	}
 
-	cmd = exec.Command("/bin/sh", "-c", "docker ps --no-trunc --all --format \"{{.Names}}||{{.Status}}\"")
+	cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s ps --no-trunc --all --format \"{{.Names}}||{{.Status}}\"", config.Config.ContainerEngine))
 	var outb2 bytes.Buffer
 	cmd.Stdout = &outb2
 	err = cmd.Run()
@@ -104,7 +105,7 @@ func deployApplication(app StormfrontApplication) {
 	fmt.Printf("Deploying application %s\n", app.Name)
 
 	// Clean up any possible artifacts
-	if err := exec.Command("/bin/sh", "-c", fmt.Sprintf("docker kill %s", app.Name)).Run(); err != nil {
+	if err := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill %s", config.Config.ContainerEngine, app.Name)).Run(); err != nil {
 		fmt.Printf("No running container with name %s exists, skipping removal\n", app.Name)
 	}
 	if err := os.Remove(fmt.Sprintf("/var/stormfront/%s.hosts", app.Name)); err != nil {
@@ -114,7 +115,7 @@ func deployApplication(app StormfrontApplication) {
 		fmt.Printf("Could not find /var/stormfront/%s.cid file, skipping removal\n", app.Name)
 	}
 
-	dockerCommand := "docker run --net host -d --rm "
+	dockerCommand := fmt.Sprintf("%s run --net host -d --rm ", config.Config.ContainerEngine)
 	dockerCommand += fmt.Sprintf("--name %s ", app.Name)
 	dockerCommand += fmt.Sprintf("--cidfile /var/stormfront/%s.cid ", app.Name)
 	dockerCommand += fmt.Sprintf("--cpus=\"%f\" ", app.CPU)
@@ -131,7 +132,7 @@ func deployApplication(app StormfrontApplication) {
 		fmt.Printf("Encountered error deploying Docker container: %v\n", err.Error())
 	}
 
-	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("docker exec -u 0 %s sh -c \"cat /etc/hosts\"", app.Name))
+	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s exec -u 0 %s sh -c \"cat /etc/hosts\"", config.Config.ContainerEngine, app.Name))
 	var outb bytes.Buffer
 	cmd.Stdout = &outb
 	err = cmd.Run()
@@ -148,9 +149,9 @@ func deployApplication(app StormfrontApplication) {
 
 func destroyApplication(app StormfrontApplication) {
 	fmt.Printf("Destroying application %s\n", app.Name)
-	err := exec.Command("/bin/sh", "-c", fmt.Sprintf("docker kill %s", app.Name)).Run()
+	err := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill %s", config.Config.ContainerEngine, app.Name)).Run()
 	if err != nil {
-		fmt.Printf("Encountered error killing docker container: %v\n", err.Error())
+		fmt.Printf("Encountered error killing container: %v\n", err.Error())
 	}
 	err = os.Remove(fmt.Sprintf("/var/stormfront/%s.hosts", app.Name))
 	if err != nil {
@@ -231,7 +232,7 @@ func reconcileApplications() {
 	// Update /etc/hosts for running applications
 	for _, definedApp := range definedApplications {
 		if Client.ID == definedApp.ID {
-			err = exec.Command("/bin/sh", "-c", fmt.Sprintf("docker exec -u 0 %s sh -c \"echo \\\"$(cat /var/stormfront/%s.hosts)\\n$(cat /var/stormfront/hosts)\\\" > /etc/hosts\"", definedApp.Name, definedApp.Name)).Run()
+			err = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s exec -u 0 %s sh -c \"echo \\\"$(cat /var/stormfront/%s.hosts)\\n$(cat /var/stormfront/hosts)\\\" > /etc/hosts\"", config.Config.ContainerEngine, definedApp.Name, definedApp.Name)).Run()
 			if err != nil {
 				fmt.Printf("Encountered error copying to hosts file: %v\n", err.Error())
 				continue
