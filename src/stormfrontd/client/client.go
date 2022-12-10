@@ -193,6 +193,7 @@ func updateSuccession() error {
 func HealthCheckFollower() {
 	for {
 		reconcileApplications()
+		updateApplicationStatus()
 		time.Sleep(HEALTH_CHECK_DELAY * time.Second)
 	}
 }
