@@ -57,7 +57,12 @@ func getApplicationStatus(app StormfrontApplication) (string, string, string) { 
 	cpu := ""
 	memory := ""
 
-	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s stats --no-stream --no-trunc --all --format \"{{.CPUPerc}}||{{.MemPerc}}\"", config.Config.ContainerEngine))
+	var cmd *exec.Cmd
+	if config.Config.ContainerEngine == "docker" {
+		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s stats --no-stream --no-trunc --all --format \"{{.CPUPerc}}||{{.MemPerc}}\"", config.Config.ContainerEngine))
+	} else {
+		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s stats --no-stream --all --format \"{{.CPUPerc}}||{{.MemPerc}}\"", config.Config.ContainerEngine))
+	}
 	var outb1 bytes.Buffer
 	cmd.Stdout = &outb1
 	err := cmd.Run()
@@ -78,7 +83,11 @@ func getApplicationStatus(app StormfrontApplication) (string, string, string) { 
 		}
 	}
 
-	cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s ps --no-trunc --all --format \"{{.Names}}||{{.Status}}\"", config.Config.ContainerEngine))
+	if config.Config.ContainerEngine == "docker" {
+		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s ps --no-trunc --all --format \"{{.Names}}||{{.Status}}\"", config.Config.ContainerEngine))
+	} else {
+		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s ps --all --format \"{{.Names}}||{{.Status}}\"", config.Config.ContainerEngine))
+	}
 	var outb2 bytes.Buffer
 	cmd.Stdout = &outb2
 	err = cmd.Run()
