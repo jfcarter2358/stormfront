@@ -280,6 +280,15 @@ func Initialize(joinToken string) error {
 			panic(err)
 		}
 
+		dbDataRaw := map[string]interface{}{"id": Client.ID, "succession": make([]interface{}, 0), "unhealthy": make([]interface{}, 0), "unknown": make([]interface{}, 0)}
+		dbData, _ := json.Marshal(dbDataRaw)
+
+		_, err = connection.Query(fmt.Sprintf("post record stormfront.node %s", dbData))
+
+		if err != nil {
+			panic(err)
+		}
+
 		// Check follower healths
 		go HealthCheckLeader()
 	}

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -16,7 +17,11 @@ func RegisterFollower(c *gin.Context) {
 	currentTime := time.Now()
 	Client.Updated = currentTime.Format(time.RFC3339)
 
-	_, err := connection.Query(`get record stormfront.node | jq '.[0].succession[.[0].succession|length] |= . + "baz"' | put record stormfront.node`)
+	followerData, _ := json.Marshal(follower)
+
+	// This should append the follower JSON instead of "baz"
+	// Also the original host needs to be added to the nodes list so that it is not empty
+	_, err := connection.Query(fmt.Sprintf(`get record stormfront.node | jq '.[0].succession[.[0].succession|length] |= . + %s' | put record stormfront.node`, followerData))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

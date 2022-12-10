@@ -14,7 +14,7 @@ var Collections = map[string]string{
 	"auth":        `{"id":"STRING","access_token":"STRING","refresh_token":"STRING","token_expiration":"STRING","token_issued":"STRING"}`,
 	"api":         `{"token":"STRING"}`,
 	"application": `{"id":"STRING","node":"STRING","name":"STRING","image":"STRING","hostname":"STRING","env":"DICT","ports":"DICT","memory":"INT","cpu":"FLOAT","status":"DICT"}`,
-	"node":        `{"foo":"STRING","succession":"LIST","unhealthy":"LIST","unknown":"LIST"}`,
+	"node":        `{"id":"STRING","succession":"LIST","unhealthy":"LIST","unknown":"LIST"}`,
 }
 
 func CreateDatabases() error {
