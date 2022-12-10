@@ -54,14 +54,14 @@ func updateApplicationStatus() error {
 
 func getApplicationStatus(app StormfrontApplication) (string, string, string) { // status, cpu, memory
 	status := ""
-	cpu := ""
-	memory := ""
+	cpu := "-1"
+	memory := "-1"
 
 	var cmd *exec.Cmd
 	if config.Config.ContainerEngine == "docker" {
-		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s stats --no-stream --no-trunc --all --format \"{{.CPUPerc}}||{{.MemPerc}}\"", config.Config.ContainerEngine))
+		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s stats %s --no-stream --no-trunc --format \"{{.CPUPerc}}||{{.MemPerc}}\"", config.Config.ContainerEngine, app.Name))
 	} else {
-		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s stats --no-stream --all --format \"{{.CPUPerc}}||{{.MemPerc}}\"", config.Config.ContainerEngine))
+		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s stats %s --no-stream --format \"{{.CPUPerc}}||{{.MemPerc}}\"", config.Config.ContainerEngine, app.Name))
 	}
 	var outb1 bytes.Buffer
 	cmd.Stdout = &outb1
@@ -99,7 +99,9 @@ func getApplicationStatus(app StormfrontApplication) (string, string, string) { 
 			for _, line := range lines {
 				parts := strings.Split(line, "||")
 				if len(parts) == 2 {
-					status = parts[1]
+					if parts[0] == app.Name {
+						status = parts[1]
+					}
 				} else {
 					break
 				}
