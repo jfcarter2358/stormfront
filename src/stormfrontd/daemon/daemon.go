@@ -123,7 +123,7 @@ func Join(leaderHost string, leaderPort int, joinToken string) error {
 		Healthy:    true,
 	}
 
-	err = database.Deploy(fmt.Sprintf("%s:%d", leaderHost, leaderPort))
+	err = database.Deploy(fmt.Sprintf("%s:7437", leaderHost))
 
 	if err != nil {
 		database.Destroy()
