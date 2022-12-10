@@ -43,7 +43,7 @@ func updateApplicationStatus() error {
 		appBytes, _ := json.Marshal(appMap)
 		json.Unmarshal(appBytes, &app)
 		status, cpu, memory := getApplicationStatus(app)
-		_, err := connection.Query(fmt.Sprintf(`patch record stormfront.application '%s' {"status":"%s","cpu":"%s","memory":"%s"}`, appMap[".id"].(string), status, cpu, memory))
+		_, err := connection.Query(fmt.Sprintf(`patch record stormfront.application '%s' {"status": {"status":"%s","cpu":"%s","memory":"%s"}}`, appMap[".id"].(string), status, cpu, memory))
 		if err != nil {
 			fmt.Printf("Unable to update database with status for application %s", app.ID)
 		}
