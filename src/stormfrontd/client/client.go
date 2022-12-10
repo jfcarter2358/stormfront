@@ -192,10 +192,7 @@ func updateSuccession() error {
 
 func HealthCheckFollower() {
 	for {
-		err := updateSuccession()
-		if err != nil {
-			fmt.Printf("Encountered error updating succession: %v", err)
-		}
+		reconcileApplications()
 		time.Sleep(HEALTH_CHECK_DELAY * time.Second)
 	}
 }
@@ -262,6 +259,9 @@ func Initialize(joinToken string) error {
 		if status != http.StatusOK {
 			return fmt.Errorf("unable to contact client at %s:%v, received status code %v", Client.Leader.Host, Client.Leader.Port, status)
 		}
+
+		// Check follower healths
+		go HealthCheckFollower()
 	} else {
 		time.Sleep(5 * time.Second)
 		err := CreateDatabases()

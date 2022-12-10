@@ -22,10 +22,10 @@ func CreateDatabases() error {
 	connection.Initialize(CERESDB_USERNAME, config.Config.CeresDBPassword, Client.Host, CERESDB_PORT)
 	fmt.Println("Done!")
 
-	fmt.Printf("Username: %s\n", connection.Username)
-	fmt.Printf("Password: %s\n", connection.Password)
-	fmt.Printf("Host: %s\n", connection.Host)
-	fmt.Printf("Port: %d\n", connection.Port)
+	// fmt.Printf("Username: %s\n", connection.Username)
+	// fmt.Printf("Password: %s\n", connection.Password)
+	// fmt.Printf("Host: %s\n", connection.Host)
+	// fmt.Printf("Port: %d\n", connection.Port)
 
 	fmt.Println("Creating stormfront database")
 	data, err := connection.Query("post database stormfront")
