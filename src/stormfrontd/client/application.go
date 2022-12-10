@@ -194,6 +194,7 @@ func reconcileApplications() {
 				break
 			}
 		}
+		fmt.Printf("Application: %s, %s, %v", definedApp.Node, Client.ID, shouldBeDeployed)
 		if shouldBeDeployed {
 			if definedApp.Node == Client.ID {
 				deployApplication(definedApp)
