@@ -12,6 +12,8 @@ const CERESDB_IMAGE = "jfcarter2358/ceresdb:1.1.0"
 func Deploy(leader string) error {
 	os.MkdirAll("/var/stormfront/ceresdb/data", os.ModePerm)
 	os.MkdirAll("/var/stormfront/ceresdb/indices", os.ModePerm)
+	fmt.Println("Removing any existing ceresdb containers...")
+	exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill ceresdb", config.Config.ContainerEngine)).Run()
 	fmt.Println("Deploying CeresDB...")
 	dockerCommand := fmt.Sprintf("%s run --net host -d --rm ", config.Config.ContainerEngine)
 	dockerCommand += "--name ceresdb "
