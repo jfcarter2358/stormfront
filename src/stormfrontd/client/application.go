@@ -142,6 +142,7 @@ func deployApplication(app StormfrontApplication) {
 		dockerCommand += fmt.Sprintf("-p %s:%s ", to, from)
 	}
 	dockerCommand += app.Image
+	fmt.Printf("Docker command: %s\n", dockerCommand)
 	err := exec.Command("/bin/sh", "-c", dockerCommand).Run()
 	if err != nil {
 		fmt.Printf("Encountered error deploying Docker container: %v\n", err.Error())
