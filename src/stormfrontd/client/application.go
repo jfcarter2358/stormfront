@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"sort"
 	"stormfrontd/config"
 	"strings"
 
@@ -40,6 +41,9 @@ func updateApplicationStatus() error {
 	connection.Host = Client.Leader.Host
 	for _, appMap := range data {
 		var app StormfrontApplication
+		if app.Node != Client.ID {
+			continue
+		}
 		appBytes, _ := json.Marshal(appMap)
 		json.Unmarshal(appBytes, &app)
 		status, cpu, memory := getApplicationStatus(app)
@@ -141,6 +145,7 @@ func deployApplication(app StormfrontApplication) {
 	err := exec.Command("/bin/sh", "-c", dockerCommand).Run()
 	if err != nil {
 		fmt.Printf("Encountered error deploying Docker container: %v\n", err.Error())
+		return
 	}
 
 	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s exec -u 0 %s sh -c \"cat /etc/hosts\"", config.Config.ContainerEngine, app.Name))
@@ -149,13 +154,17 @@ func deployApplication(app StormfrontApplication) {
 	err = cmd.Run()
 	if err != nil {
 		fmt.Printf("Encountered error getting container /etc/hosts: %v\n", err.Error())
+		return
 	}
 
 	hostData := outb.String()
 	err = os.WriteFile(fmt.Sprintf("/var/stormfront/%s.hosts", app.Name), []byte(hostData), 0644)
 	if err != nil {
 		fmt.Printf("Encountered error writing hosts file: %v\n", err.Error())
+		return
 	}
+
+	Client.Applications = append(Client.Applications, app)
 }
 
 func destroyApplication(app StormfrontApplication) {
@@ -213,8 +222,10 @@ func reconcileApplications() {
 		}
 	}
 
+	toRemove := []int{}
+
 	// Check for applications that should be torn down
-	for _, runningApp := range Client.Applications {
+	for idx, runningApp := range Client.Applications {
 		shouldBeDestroyed := true
 		for _, definedApp := range definedApplications {
 			if definedApp.ID == runningApp.ID {
@@ -225,8 +236,15 @@ func reconcileApplications() {
 		if shouldBeDestroyed {
 			if runningApp.Node == Client.ID {
 				destroyApplication(runningApp)
+				toRemove = append(toRemove, idx)
 			}
 		}
+	}
+
+	// Remove applications that should have been destroyed
+	sort.Sort(sort.Reverse(sort.IntSlice(toRemove)))
+	for idx := range toRemove {
+		Client.Applications = append(Client.Applications[:idx], Client.Applications[idx+1:]...)
 	}
 
 	for _, runningApp := range Client.Applications {
