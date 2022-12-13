@@ -34,18 +34,18 @@ type StormfrontApplicationStatus struct {
 }
 
 func updateApplicationStatus() error {
+	connection.Host = Client.Leader.Host
 	data, err := connection.Query("get record stormfront.application")
 	if err != nil {
 		return err
 	}
-	connection.Host = Client.Leader.Host
 	for _, appMap := range data {
 		var app StormfrontApplication
+		appBytes, _ := json.Marshal(appMap)
+		json.Unmarshal(appBytes, &app)
 		if app.Node != Client.ID {
 			continue
 		}
-		appBytes, _ := json.Marshal(appMap)
-		json.Unmarshal(appBytes, &app)
 		status, cpu, memory := getApplicationStatus(app)
 		fmt.Printf(`CeresDB Query :: patch record stormfront.application '%s' {"status": {"status":"%s","cpu":"%s","memory":"%s"}}`, appMap[".id"].(string), status, cpu, memory)
 		_, err := connection.Query(fmt.Sprintf(`patch record stormfront.application '%s' {"status": {"status":"%s","cpu":"%s","memory":"%s"}}`, appMap[".id"].(string), status, cpu, memory))
