@@ -132,7 +132,7 @@ func deployApplication(app StormfrontApplication) {
 
 	dockerCommand := fmt.Sprintf("%s run --net host -d --rm ", config.Config.ContainerEngine)
 	dockerCommand += fmt.Sprintf("--name %s ", app.Name)
-	dockerCommand += fmt.Sprintf("--cidfile /var/stormfront/%s.cid ", app.Name)
+	// dockerCommand += fmt.Sprintf("--cidfile /var/stormfront/%s.cid ", app.Name)
 	dockerCommand += fmt.Sprintf("--cpus=\"%f\" ", app.CPU)
 	dockerCommand += fmt.Sprintf("--memory=\"%db\" ", int(app.Memory))
 	for key, val := range app.Env {
