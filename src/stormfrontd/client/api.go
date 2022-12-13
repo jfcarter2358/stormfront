@@ -238,6 +238,7 @@ func CreateApplication(c *gin.Context) {
 		}
 	} else {
 		for _, node := range nodes {
+			fmt.Printf("Available CPU: %v, requested CPU: %v, available memory: %v, requested memory: %v", node.System.CPUAvailable, app.CPU, node.System.MemoryAvailable, app.Memory)
 			if node.System.CPUAvailable >= app.CPU && node.System.MemoryAvailable >= app.Memory {
 				app.Node = node.ID
 				appBytes, _ := json.Marshal(app)
