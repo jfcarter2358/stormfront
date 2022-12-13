@@ -224,6 +224,7 @@ func CreateApplication(c *gin.Context) {
 			if node.ID != app.Node {
 				continue
 			}
+			fmt.Printf("Available CPU: %v, requested CPU: %v, available memory: %v, requested memory: %v\n", node.System.CPUAvailable, app.CPU, node.System.MemoryAvailable, app.Memory)
 			if node.System.CPUAvailable >= app.CPU && node.System.MemoryAvailable >= app.Memory {
 				app.Node = node.ID
 				appBytes, _ := json.Marshal(app)
@@ -235,10 +236,11 @@ func CreateApplication(c *gin.Context) {
 				c.Status(http.StatusCreated)
 				return
 			}
+			fmt.Printf("Insufficient resources to schedule on node %s\n", node.ID)
 		}
 	} else {
 		for _, node := range nodes {
-			fmt.Printf("Available CPU: %v, requested CPU: %v, available memory: %v, requested memory: %v", node.System.CPUAvailable, app.CPU, node.System.MemoryAvailable, app.Memory)
+			fmt.Printf("Available CPU: %v, requested CPU: %v, available memory: %v, requested memory: %v\n", node.System.CPUAvailable, app.CPU, node.System.MemoryAvailable, app.Memory)
 			if node.System.CPUAvailable >= app.CPU && node.System.MemoryAvailable >= app.Memory {
 				app.Node = node.ID
 				appBytes, _ := json.Marshal(app)
@@ -250,6 +252,7 @@ func CreateApplication(c *gin.Context) {
 				c.Status(http.StatusCreated)
 				return
 			}
+			fmt.Printf("Insufficient resources to schedule on node %s\n", node.ID)
 		}
 	}
 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Insufficient resources to schedule"})
