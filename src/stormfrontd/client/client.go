@@ -204,6 +204,7 @@ func HealthCheckLeader() {
 		if err != nil {
 			fmt.Printf("Encountered error updating succession: %v", err)
 		}
+		updateApplicationStatus()
 		time.Sleep(HEALTH_CHECK_DELAY * time.Second)
 	}
 }
