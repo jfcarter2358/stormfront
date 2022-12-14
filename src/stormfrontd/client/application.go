@@ -127,7 +127,8 @@ func deployApplication(app StormfrontApplication) {
 		fmt.Printf("Could not find /var/stormfront/%s.hosts file, skipping removal\n", app.Name)
 	}
 
-	dockerCommand := fmt.Sprintf("%s run --net host -d --rm ", config.Config.ContainerEngine)
+	// dockerCommand := fmt.Sprintf("%s run --net host -d --rm ", config.Config.ContainerEngine)
+	dockerCommand := fmt.Sprintf("%s run --net host -d ", config.Config.ContainerEngine)
 	dockerCommand += fmt.Sprintf("--name %s ", app.Name)
 	dockerCommand += fmt.Sprintf("--cpus=\"%f\" ", app.CPU)
 	dockerCommand += fmt.Sprintf("--memory=\"%db\" ", int(app.Memory))
@@ -166,7 +167,11 @@ func deployApplication(app StormfrontApplication) {
 
 func destroyApplication(app StormfrontApplication) {
 	fmt.Printf("Destroying application %s\n", app.Name)
-	err := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill %s", config.Config.ContainerEngine, app.Name)).Run()
+	err := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s rm %s", config.Config.ContainerEngine, app.Name)).Run()
+	if err != nil {
+		fmt.Printf("Encountered error removing container: %v\n", err.Error())
+	}
+	err = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill %s", config.Config.ContainerEngine, app.Name)).Run()
 	if err != nil {
 		fmt.Printf("Encountered error killing container: %v\n", err.Error())
 	}
