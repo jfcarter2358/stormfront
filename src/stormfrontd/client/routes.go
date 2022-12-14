@@ -15,6 +15,7 @@ func InitializeRoutes(clientType string) {
 		apiRoutes.GET("/nodes", middleware.CheckTokenAuthentication(), GetNodes)
 		apiRoutes.GET("/application", middleware.CheckTokenAuthentication(), GetAllApplications)
 		apiRoutes.GET("/application/:id/logs", middleware.CheckTokenAuthentication(), GetApplicationLogs)
+		apiRoutes.GET("/application/:id/restart", middleware.CheckTokenAuthentication(), RestartApplication)
 		apiRoutes.GET("/application/:id", middleware.CheckTokenAuthentication(), GetApplication)
 		apiRoutes.POST("/application", middleware.CheckTokenAuthentication(), CreateApplication)
 		// apiRoutes.PATCH("/application/:id", middleware.CheckTokenAuthentication(), UpdateApplication)

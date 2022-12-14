@@ -316,6 +316,35 @@ func DeleteApplication(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+func RestartApplication(c *gin.Context) {
+	id := c.Param("id")
+
+	if Client.Type != "Leader" {
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/application/%s/restart", Client.Leader.Host, Client.Leader.Port, id))
+		return
+	}
+
+	data, err := connection.Query(fmt.Sprintf(`get record stormfront.application | filter id = '%s'`, id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	if len(data) == 0 {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	var app StormfrontApplication
+
+	appBytes, _ := json.Marshal(data[0])
+
+	json.Unmarshal(appBytes, &app)
+
+	deployApplication(app)
+	deployApplication(app)
+}
+
 // TODO: Re-implement the UpdateApplication logic
 // func UpdateApplication(c *gin.Context) {
 // 	id := c.Param("id")
