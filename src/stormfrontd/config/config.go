@@ -23,6 +23,9 @@ type ConfigObject struct {
 	ReservedCPUPercentage    float64  `json:"reserved_cpu_percentage" env:"RESERVED_CPU_PERCENTAGE"`
 	ReservedMemoryPercentage float64  `json:"reserved_memory_percentage" env:"RESERVED_MEMORY_PERCENTAGE"`
 	CeresDBPassword          string   `json:"ceresdb_password" env:"CERESDB_PASSWORD"`
+	CeresDBImage             string   `json:"ceresdb_image" env:"CERESDB_IMAGE"`
+	CeresDBPort              int      `json:"ceresdb_port" env:"CERESDB_PORT"`
+	CeresDBLogLevel          string   `json:"ceresdb_log_level" env:"CERESDB_LOG_LEVEL"`
 	ContainerEngine          string   `json:"container_engine" env:"CONTAINER_ENGINE"`
 }
 
@@ -44,6 +47,9 @@ func LoadConfig() {
 		ReservedCPUPercentage:    0.25,
 		ReservedMemoryPercentage: 0.25,
 		CeresDBPassword:          "ceresdb",
+		CeresDBImage:             "jfcarter2358/ceresdb:1.1.1",
+		CeresDBPort:              7437,
+		CeresDBLogLevel:          "INFO",
 		ContainerEngine:          "docker",
 	}
 

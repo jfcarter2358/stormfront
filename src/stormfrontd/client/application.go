@@ -126,13 +126,9 @@ func deployApplication(app StormfrontApplication) {
 	if err := os.Remove(fmt.Sprintf("/var/stormfront/%s.hosts", app.Name)); err != nil {
 		fmt.Printf("Could not find /var/stormfront/%s.hosts file, skipping removal\n", app.Name)
 	}
-	if err := os.Remove(fmt.Sprintf("/var/stormfront/%s.cid", app.Name)); err != nil {
-		fmt.Printf("Could not find /var/stormfront/%s.cid file, skipping removal\n", app.Name)
-	}
 
 	dockerCommand := fmt.Sprintf("%s run --net host -d --rm ", config.Config.ContainerEngine)
 	dockerCommand += fmt.Sprintf("--name %s ", app.Name)
-	// dockerCommand += fmt.Sprintf("--cidfile /var/stormfront/%s.cid ", app.Name)
 	dockerCommand += fmt.Sprintf("--cpus=\"%f\" ", app.CPU)
 	dockerCommand += fmt.Sprintf("--memory=\"%db\" ", int(app.Memory))
 	for key, val := range app.Env {
@@ -177,10 +173,6 @@ func destroyApplication(app StormfrontApplication) {
 	err = os.Remove(fmt.Sprintf("/var/stormfront/%s.hosts", app.Name))
 	if err != nil {
 		fmt.Printf("Encountered error removing hosts file: %v\n", err.Error())
-	}
-	err = os.Remove(fmt.Sprintf("/var/stormfront/%s.cid", app.Name))
-	if err != nil {
-		fmt.Printf("Encountered error removing CID file: %v\n", err.Error())
 	}
 }
 

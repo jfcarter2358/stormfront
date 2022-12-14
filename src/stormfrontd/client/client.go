@@ -229,7 +229,7 @@ func Initialize(joinToken string) error {
 	}()
 
 	if Client.Type == "Follower" {
-		connection.Initialize(CERESDB_USERNAME, config.Config.CeresDBPassword, Client.Host, CERESDB_PORT)
+		connection.Initialize(CERESDB_USERNAME, config.Config.CeresDBPassword, Client.Host, config.Config.CeresDBPort)
 
 		Client.ID = uuid.New().String()
 

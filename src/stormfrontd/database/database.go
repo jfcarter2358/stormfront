@@ -7,8 +7,6 @@ import (
 	"stormfrontd/config"
 )
 
-const CERESDB_IMAGE = "jfcarter2358/ceresdb:1.1.0"
-
 func Deploy(leader string) error {
 	os.MkdirAll("/var/stormfront/ceresdb/data", os.ModePerm)
 	os.MkdirAll("/var/stormfront/ceresdb/indices", os.ModePerm)
@@ -21,13 +19,13 @@ func Deploy(leader string) error {
 	dockerCommand += fmt.Sprintf("-e CERESDB_DEFAULT_ADMIN_PASSWORD=%s ", config.Config.CeresDBPassword)
 	if leader != "" {
 		dockerCommand += fmt.Sprintf("-e CERESDB_LEADER='%s' ", leader)
-		dockerCommand += "-e CERESDB_LOG_LEVEL='TRACE' "
+		dockerCommand += fmt.Sprintf("-e CERESDB_LOG_LEVEL='%s' ", config.Config.CeresDBLogLevel)
 		dockerCommand += fmt.Sprintf("-e CERESDB_FOLLOWER_AUTH='ceresdb:%s' ", config.Config.CeresDBPassword)
 	}
-	dockerCommand += "-p 7437:7437 "
+	dockerCommand += fmt.Sprintf("-p %d:%d ", config.Config.CeresDBPort, config.Config.CeresDBPort)
 	// dockerCommand += "-v /var/stormfront/ceresdb/data:/home/ceresdb/.ceresdb/data "
 	// dockerCommand += "-v /var/stormfront/ceresdb/indices:/home/ceresdb/.ceresdb/indices "
-	dockerCommand += CERESDB_IMAGE
+	dockerCommand += config.Config.CeresDBImage
 	err := exec.Command("/bin/sh", "-c", dockerCommand).Run()
 	if err != nil {
 		fmt.Printf("Encountered error deploying CeresDB instance: %v\n", err.Error())
