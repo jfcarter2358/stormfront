@@ -397,11 +397,6 @@ func DeleteApplication(c *gin.Context) {
 func GetApplicationLogs(c *gin.Context) {
 	id := c.Param("id")
 
-	if Client.Type != "Leader" {
-		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/application/%s/logs", Client.Leader.Host, Client.Leader.Port, id))
-		return
-	}
-
 	data, err := connection.Query(fmt.Sprintf(`get record stormfront.application | filter id = '%s'`, id))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
@@ -414,6 +409,22 @@ func GetApplicationLogs(c *gin.Context) {
 	}
 
 	app := data[0]
+	nodeId := app["node"].(string)
+
+	if nodeId != Client.ID {
+		if Client.Type != "Leader" {
+			c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/application/%s/logs", Client.Leader.Host, Client.Leader.Port, id))
+			return
+		}
+		nodeToQuery, err := getHostFromNode(nodeId)
+		if err != nil {
+			fmt.Printf("Encountered error getting container logs: %v\n", err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s/api/application/%s/logs", nodeToQuery, id))
+		return
+	}
 
 	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s logs %s", config.Config.ContainerEngine, app["name"].(string)))
 	var outb bytes.Buffer
