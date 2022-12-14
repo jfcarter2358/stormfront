@@ -271,12 +271,17 @@ func reconcileApplications() {
 	}
 
 	for _, runningApp := range Client.Applications {
-		for _, definedApp := range definedApplications {
+		for idx, definedApp := range definedApplications {
 			if runningApp.ID == definedApp.ID {
-				if !reflect.DeepEqual(runningApp.Env, definedApp.Env) || runningApp.Image != definedApp.Image || !reflect.DeepEqual(runningApp.Ports, definedApp.Ports) {
+				if !reflect.DeepEqual(runningApp.Env, definedApp.Env) || runningApp.Image != definedApp.Image || !reflect.DeepEqual(runningApp.Ports, definedApp.Ports) || runningApp.CPU != definedApp.CPU || runningApp.Memory != definedApp.Memory {
 					fmt.Printf("Performing application update for %s\n", runningApp.Name)
 					destroyApplication(runningApp)
 					deployApplication(definedApp, false)
+					Client.Applications[idx].Env = definedApp.Env
+					Client.Applications[idx].Image = definedApp.Image
+					Client.Applications[idx].Ports = definedApp.Ports
+					Client.Applications[idx].CPU = definedApp.CPU
+					Client.Applications[idx].Memory = definedApp.Memory
 				}
 			}
 		}
