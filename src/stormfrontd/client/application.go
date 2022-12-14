@@ -116,7 +116,7 @@ func getApplicationStatus(app StormfrontApplication) (string, string, string) { 
 	return status, cpu, memory
 }
 
-func deployApplication(app StormfrontApplication) {
+func deployApplication(app StormfrontApplication, shouldAppend bool) {
 	fmt.Printf("Deploying application %s\n", app.Name)
 
 	// Clean up any possible artifacts
@@ -174,7 +174,9 @@ func deployApplication(app StormfrontApplication) {
 		return
 	}
 
-	Client.Applications = append(Client.Applications, app)
+	if shouldAppend {
+		Client.Applications = append(Client.Applications, app)
+	}
 }
 
 func destroyApplication(app StormfrontApplication) {
@@ -238,7 +240,7 @@ func reconcileApplications() {
 		}
 		if shouldBeDeployed {
 			if definedApp.Node == Client.ID {
-				deployApplication(definedApp)
+				deployApplication(definedApp, true)
 			}
 		}
 	}
@@ -274,7 +276,7 @@ func reconcileApplications() {
 				if !reflect.DeepEqual(runningApp.Env, definedApp.Env) || runningApp.Image != definedApp.Image || !reflect.DeepEqual(runningApp.Ports, definedApp.Ports) {
 					fmt.Printf("Performing application update for %s\n", runningApp.Name)
 					destroyApplication(runningApp)
-					deployApplication(definedApp)
+					deployApplication(definedApp, false)
 				}
 			}
 		}
