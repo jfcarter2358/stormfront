@@ -120,10 +120,10 @@ func deployApplication(app StormfrontApplication) {
 	fmt.Printf("Deploying application %s\n", app.Name)
 
 	// Clean up any possible artifacts
-	if err := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s rm %s", config.Config.ContainerEngine, app.Name)).Run(); err != nil {
-		fmt.Printf("No running container with name %s exists, skipping removal\n", app.Name)
-	}
 	if err := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill %s", config.Config.ContainerEngine, app.Name)).Run(); err != nil {
+		fmt.Printf("No running container with name %s exists, skipping kill\n", app.Name)
+	}
+	if err := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s rm %s", config.Config.ContainerEngine, app.Name)).Run(); err != nil {
 		fmt.Printf("No running container with name %s exists, skipping removal\n", app.Name)
 	}
 	if err := os.Remove(fmt.Sprintf("/var/stormfront/%s.hosts", app.Name)); err != nil {
@@ -179,23 +179,23 @@ func deployApplication(app StormfrontApplication) {
 
 func destroyApplication(app StormfrontApplication) {
 	fmt.Printf("Destroying application %s\n", app.Name)
-	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s rm %s", config.Config.ContainerEngine, app.Name))
+	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill %s", config.Config.ContainerEngine, app.Name))
 	var outb1, errb1 bytes.Buffer
 	cmd.Stdout = &outb1
 	cmd.Stderr = &errb1
 	err := cmd.Run()
 	if err != nil {
-		fmt.Printf("Encountered error removing container: %v\n", err.Error())
+		fmt.Printf("Encountered error killing container: %v\n", err.Error())
 		fmt.Printf("STDOUT: %s\n", outb1.String())
 		fmt.Printf("STDERR: %s\n", errb1.String())
 	}
-	cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill %s", config.Config.ContainerEngine, app.Name))
+	cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s rm %s", config.Config.ContainerEngine, app.Name))
 	var outb2, errb2 bytes.Buffer
 	cmd.Stdout = &outb1
 	cmd.Stderr = &errb1
 	err = cmd.Run()
 	if err != nil {
-		fmt.Printf("Encountered error killing container: %v\n", err.Error())
+		fmt.Printf("Encountered error removing container: %v\n", err.Error())
 		fmt.Printf("STDOUT: %s\n", outb2.String())
 		fmt.Printf("STDERR: %s\n", errb2.String())
 	}
