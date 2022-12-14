@@ -21,6 +21,7 @@ func Deploy(leader string) error {
 	dockerCommand += fmt.Sprintf("-e CERESDB_DEFAULT_ADMIN_PASSWORD=%s ", config.Config.CeresDBPassword)
 	if leader != "" {
 		dockerCommand += fmt.Sprintf("-e CERESDB_LEADER='%s' ", leader)
+		dockerCommand += "-e CERESDB_LOG_LEVEL='TRACE' "
 		dockerCommand += fmt.Sprintf("-e CERESDB_FOLLOWER_AUTH='ceresdb:%s' ", config.Config.CeresDBPassword)
 	}
 	dockerCommand += "-p 7437:7437 "
