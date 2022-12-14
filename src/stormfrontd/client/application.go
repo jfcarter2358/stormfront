@@ -120,6 +120,9 @@ func deployApplication(app StormfrontApplication) {
 	fmt.Printf("Deploying application %s\n", app.Name)
 
 	// Clean up any possible artifacts
+	if err := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s rm %s", config.Config.ContainerEngine, app.Name)).Run(); err != nil {
+		fmt.Printf("No running container with name %s exists, skipping removal\n", app.Name)
+	}
 	if err := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill %s", config.Config.ContainerEngine, app.Name)).Run(); err != nil {
 		fmt.Printf("No running container with name %s exists, skipping removal\n", app.Name)
 	}
@@ -140,22 +143,31 @@ func deployApplication(app StormfrontApplication) {
 	}
 	dockerCommand += app.Image
 	fmt.Printf("Docker command: %s\n", dockerCommand)
-	err := exec.Command("/bin/sh", "-c", dockerCommand).Run()
+	cmd := exec.Command("/bin/sh", "-c", dockerCommand)
+	var outb1, errb1 bytes.Buffer
+	cmd.Stdout = &outb1
+	cmd.Stderr = &errb1
+	err := cmd.Run()
 	if err != nil {
 		fmt.Printf("Encountered error deploying Docker container: %v\n", err.Error())
+		fmt.Printf("STDOUT: %s\n", outb1.String())
+		fmt.Printf("STDERR: %s\n", errb1.String())
 		return
 	}
 
-	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s exec -u 0 %s sh -c \"cat /etc/hosts\"", config.Config.ContainerEngine, app.Name))
-	var outb bytes.Buffer
-	cmd.Stdout = &outb
+	cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s exec -u 0 %s sh -c \"cat /etc/hosts\"", config.Config.ContainerEngine, app.Name))
+	var outb2, errb2 bytes.Buffer
+	cmd.Stdout = &outb2
+	cmd.Stderr = &errb2
 	err = cmd.Run()
 	if err != nil {
 		fmt.Printf("Encountered error getting container /etc/hosts: %v\n", err.Error())
+		fmt.Printf("STDOUT: %s\n", outb2.String())
+		fmt.Printf("STDERR: %s\n", errb2.String())
 		return
 	}
 
-	hostData := outb.String()
+	hostData := outb2.String()
 	err = os.WriteFile(fmt.Sprintf("/var/stormfront/%s.hosts", app.Name), []byte(hostData), 0644)
 	if err != nil {
 		fmt.Printf("Encountered error writing hosts file: %v\n", err.Error())
@@ -167,13 +179,25 @@ func deployApplication(app StormfrontApplication) {
 
 func destroyApplication(app StormfrontApplication) {
 	fmt.Printf("Destroying application %s\n", app.Name)
-	err := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s rm %s", config.Config.ContainerEngine, app.Name)).Run()
+	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s rm %s", config.Config.ContainerEngine, app.Name))
+	var outb1, errb1 bytes.Buffer
+	cmd.Stdout = &outb1
+	cmd.Stderr = &errb1
+	err := cmd.Run()
 	if err != nil {
 		fmt.Printf("Encountered error removing container: %v\n", err.Error())
+		fmt.Printf("STDOUT: %s\n", outb1.String())
+		fmt.Printf("STDERR: %s\n", errb1.String())
 	}
-	err = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill %s", config.Config.ContainerEngine, app.Name)).Run()
+	cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill %s", config.Config.ContainerEngine, app.Name))
+	var outb2, errb2 bytes.Buffer
+	cmd.Stdout = &outb1
+	cmd.Stderr = &errb1
+	err = cmd.Run()
 	if err != nil {
 		fmt.Printf("Encountered error killing container: %v\n", err.Error())
+		fmt.Printf("STDOUT: %s\n", outb2.String())
+		fmt.Printf("STDERR: %s\n", errb2.String())
 	}
 	err = os.Remove(fmt.Sprintf("/var/stormfront/%s.hosts", app.Name))
 	if err != nil {
