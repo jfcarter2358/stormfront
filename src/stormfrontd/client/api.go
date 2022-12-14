@@ -399,6 +399,7 @@ func GetApplicationLogs(c *gin.Context) {
 
 	data, err := connection.Query(fmt.Sprintf(`get record stormfront.application | filter id = '%s'`, id))
 	if err != nil {
+		fmt.Println("Error 1")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
@@ -418,6 +419,7 @@ func GetApplicationLogs(c *gin.Context) {
 		}
 		nodeToQuery, err := getHostFromNode(nodeId)
 		if err != nil {
+			fmt.Println("Error 2")
 			fmt.Printf("Encountered error getting container logs: %v\n", err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -431,6 +433,8 @@ func GetApplicationLogs(c *gin.Context) {
 	cmd.Stdout = &outb
 	err = cmd.Run()
 	if err != nil {
+		fmt.Println("Error 3")
+		fmt.Println(outb.String())
 		fmt.Printf("Encountered error getting container logs: %v\n", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
