@@ -49,7 +49,7 @@ func LoadConfig() {
 		ReservedMemoryPercentage: 0.25,
 		CeresDBPassword:          "ceresdb",
 		CeresDBImage:             "jfcarter2358/ceresdb:1.1.1",
-		CeresDBHost:              "localhost",
+		CeresDBHost:              "",
 		CeresDBPort:              7437,
 		CeresDBLogLevel:          "INFO",
 		ContainerEngine:          "docker",

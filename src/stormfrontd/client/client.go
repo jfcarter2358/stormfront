@@ -232,7 +232,7 @@ func Initialize(joinToken string) error {
 		if config.Config.CeresDBHost == "" {
 			config.Config.CeresDBHost = Client.Host
 		}
-		connection.Initialize(CERESDB_USERNAME, config.Config.CeresDBPassword, Client.Host, config.Config.CeresDBPort)
+		connection.Initialize(CERESDB_USERNAME, config.Config.CeresDBPassword, config.Config.CeresDBHost, config.Config.CeresDBPort)
 
 		Client.ID = uuid.New().String()
 
