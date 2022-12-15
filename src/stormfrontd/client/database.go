@@ -18,8 +18,8 @@ var Collections = map[string]string{
 
 func CreateDatabases() error {
 	fmt.Println("Initializing CeresDB connection")
-	if config.ConfigObject.CeresDBHost == "" {
-		config.ConfigObject.CeresDBHost = Client.Host
+	if config.Config.CeresDBHost == "" {
+		config.Config.CeresDBHost = Client.Host
 	}
 	connection.Initialize(CERESDB_USERNAME, config.Config.CeresDBPassword, Client.Host, config.Config.CeresDBPort)
 	fmt.Println("Done!")
