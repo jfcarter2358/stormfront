@@ -52,7 +52,7 @@ func updateApplicationStatus() error {
 			fmt.Printf("Unable to update database with status for application %s", app.ID)
 		}
 	}
-	connection.Host = Client.Host
+	connection.Host = config.ConfigObject.CeresDBHost
 	return nil
 }
 
