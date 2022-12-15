@@ -25,6 +25,7 @@ type ConfigObject struct {
 	CeresDBPassword          string   `json:"ceresdb_password" env:"CERESDB_PASSWORD"`
 	CeresDBImage             string   `json:"ceresdb_image" env:"CERESDB_IMAGE"`
 	CeresDBPort              int      `json:"ceresdb_port" env:"CERESDB_PORT"`
+	CeresDBHost              string   `json:"ceresdb_host" env:"CERESDB_HOST"`
 	CeresDBLogLevel          string   `json:"ceresdb_log_level" env:"CERESDB_LOG_LEVEL"`
 	ContainerEngine          string   `json:"container_engine" env:"CONTAINER_ENGINE"`
 }
@@ -48,6 +49,7 @@ func LoadConfig() {
 		ReservedMemoryPercentage: 0.25,
 		CeresDBPassword:          "ceresdb",
 		CeresDBImage:             "jfcarter2358/ceresdb:1.1.1",
+		CeresDBHost:              "localhost",
 		CeresDBPort:              7437,
 		CeresDBLogLevel:          "INFO",
 		ContainerEngine:          "docker",
