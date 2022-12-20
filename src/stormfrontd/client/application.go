@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"reflect"
 	"sort"
 	"stormfrontd/config"
 	"strings"
@@ -117,7 +116,7 @@ func getApplicationStatus(app StormfrontApplication) (string, string, string) { 
 	return status, cpu, memory
 }
 
-func deployApplication(app StormfrontApplication, shouldAppend bool) {
+func deployApplication(app StormfrontApplication, shouldAppend, shouldWipeData bool) {
 	fmt.Printf("Deploying application %s\n", app.Name)
 
 	// Clean up any possible artifacts
@@ -143,7 +142,9 @@ func deployApplication(app StormfrontApplication, shouldAppend bool) {
 		dockerCommand += fmt.Sprintf("-p %s:%s ", to, from)
 	}
 	for src, dst := range app.Mounts {
-		os.RemoveAll(fmt.Sprintf("/var/stormfront/data/%s/%s", app.Name, src))
+		if shouldWipeData {
+			os.RemoveAll(fmt.Sprintf("/var/stormfront/data/%s/%s", app.Name, src))
+		}
 		os.MkdirAll(fmt.Sprintf("/var/stormfront/data/%s/%s", app.Name, src), os.ModePerm)
 		dockerCommand += fmt.Sprintf("--mount type=bind,src=/var/stormfront/data/%s/%s,dst=%s ", app.Name, src, dst)
 	}
@@ -185,7 +186,7 @@ func deployApplication(app StormfrontApplication, shouldAppend bool) {
 	}
 }
 
-func destroyApplication(app StormfrontApplication) {
+func destroyApplication(app StormfrontApplication, shouldWipeData bool) {
 	fmt.Printf("Destroying application %s\n", app.Name)
 	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill %s", config.Config.ContainerEngine, app.Name))
 	var outb1, errb1 bytes.Buffer
@@ -211,10 +212,12 @@ func destroyApplication(app StormfrontApplication) {
 	if err != nil {
 		fmt.Printf("Encountered error removing hosts file: %v\n", err.Error())
 	}
-	for src := range app.Mounts {
-		err := os.RemoveAll(fmt.Sprintf("/var/stormfront/data/%s/%s", app.Name, src))
-		if err != nil {
-			fmt.Printf("Encountered error removing mount data: %v\n", err.Error())
+	if shouldWipeData {
+		for src := range app.Mounts {
+			err := os.RemoveAll(fmt.Sprintf("/var/stormfront/data/%s/%s", app.Name, src))
+			if err != nil {
+				fmt.Printf("Encountered error removing mount data: %v\n", err.Error())
+			}
 		}
 	}
 }
@@ -252,7 +255,7 @@ func reconcileApplications() {
 		}
 		if shouldBeDeployed {
 			if definedApp.Node == Client.ID {
-				deployApplication(definedApp, true)
+				deployApplication(definedApp, true, true)
 			}
 		}
 	}
@@ -270,7 +273,7 @@ func reconcileApplications() {
 		}
 		if shouldBeDestroyed {
 			if runningApp.Node == Client.ID {
-				destroyApplication(runningApp)
+				destroyApplication(runningApp, true)
 				toRemove = append(toRemove, idx)
 			}
 		}
@@ -282,22 +285,22 @@ func reconcileApplications() {
 		Client.Applications = append(Client.Applications[:idx], Client.Applications[idx+1:]...)
 	}
 
-	for _, runningApp := range Client.Applications {
-		for idx, definedApp := range definedApplications {
-			if runningApp.ID == definedApp.ID {
-				if !reflect.DeepEqual(runningApp.Env, definedApp.Env) || runningApp.Image != definedApp.Image || !reflect.DeepEqual(runningApp.Ports, definedApp.Ports) || runningApp.CPU != definedApp.CPU || runningApp.Memory != definedApp.Memory {
-					fmt.Printf("Performing application update for %s\n", runningApp.Name)
-					destroyApplication(runningApp)
-					deployApplication(definedApp, false)
-					Client.Applications[idx].Env = definedApp.Env
-					Client.Applications[idx].Image = definedApp.Image
-					Client.Applications[idx].Ports = definedApp.Ports
-					Client.Applications[idx].CPU = definedApp.CPU
-					Client.Applications[idx].Memory = definedApp.Memory
-				}
-			}
-		}
-	}
+	// for _, runningApp := range Client.Applications {
+	// 	for idx, definedApp := range definedApplications {
+	// 		if runningApp.ID == definedApp.ID {
+	// 			if !reflect.DeepEqual(runningApp.Env, definedApp.Env) || runningApp.Image != definedApp.Image || !reflect.DeepEqual(runningApp.Ports, definedApp.Ports) || runningApp.CPU != definedApp.CPU || runningApp.Memory != definedApp.Memory {
+	// 				fmt.Printf("Performing application update for %s\n", runningApp.Name)
+	// 				destroyApplication(runningApp)
+	// 				deployApplication(definedApp, false)
+	// 				Client.Applications[idx].Env = definedApp.Env
+	// 				Client.Applications[idx].Image = definedApp.Image
+	// 				Client.Applications[idx].Ports = definedApp.Ports
+	// 				Client.Applications[idx].CPU = definedApp.CPU
+	// 				Client.Applications[idx].Memory = definedApp.Memory
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	// Update /etc/hosts for running applications
 	for _, definedApp := range definedApplications {

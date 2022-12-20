@@ -341,8 +341,8 @@ func RestartApplication(c *gin.Context) {
 
 	json.Unmarshal(appBytes, &app)
 
-	destroyApplication(app)
-	deployApplication(app, false)
+	destroyApplication(app, false)
+	deployApplication(app, false, false)
 }
 
 // TODO: Re-implement the UpdateApplication logic
