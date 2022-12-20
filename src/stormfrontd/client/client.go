@@ -216,7 +216,7 @@ func Initialize(joinToken string) error {
 	InitializeRoutes(Client.Type)
 
 	// Initialize DNS server
-	dns := lightdns.NewDNSServer(53)
+	dns := lightdns.NewDNSServer(6653)
 	dns.AddZoneData("stormfront.local", nil, lookupFunc, lightdns.DNSForwardLookupZone)
 	go dns.StartAndServe()
 
