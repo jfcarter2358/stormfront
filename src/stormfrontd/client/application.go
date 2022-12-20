@@ -145,7 +145,7 @@ func deployApplication(app StormfrontApplication, shouldAppend bool) {
 	for src, dst := range app.Mounts {
 		os.RemoveAll(fmt.Sprintf("/var/stormfront/data/%s/%s", app.Name, src))
 		os.MkdirAll(fmt.Sprintf("/var/stormfront/data/%s/%s", app.Name, src), os.ModePerm)
-		dockerCommand += fmt.Sprintf("--mount src=/var/stormfront/data/%s/%s,dst=%s ", app.Name, src, dst)
+		dockerCommand += fmt.Sprintf("--mount type=bind,src=/var/stormfront/data/%s/%s,dst=%s ", app.Name, src, dst)
 	}
 	dockerCommand += app.Image
 	fmt.Printf("Docker command: %s\n", dockerCommand)
