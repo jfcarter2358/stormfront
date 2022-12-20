@@ -218,7 +218,7 @@ func Initialize(joinToken string) error {
 	// Initialize DNS server
 	dns := lightdns.NewDNSServer(53)
 	dns.AddZoneData("stormfront.local", nil, lookupFunc, lightdns.DNSForwardLookupZone)
-	dns.StartAndServe()
+	go dns.StartAndServe()
 
 	Client.Server = &http.Server{
 		Addr:    ":" + strconv.Itoa(Client.Port),
