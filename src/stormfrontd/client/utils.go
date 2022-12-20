@@ -134,7 +134,7 @@ func lookupFunc(domain string) (string, error) {
 	fmt.Printf("Split records: %v", parts)
 
 	length := len(parts)
-	hostname := parts[length-3]
+	hostname := parts[length-2]
 
 	nodes, err := getNodes()
 	if err != nil {

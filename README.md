@@ -39,10 +39,11 @@ rm uninstall.sh
 - [x] Send command to node
 - [x] Generate join command
 - [x] Check system resource usage
-- [ ] Service router
 - [x] Application persistence
 - [ ] Persistence replication
 - [ ] Service DNS
+- [ ] Image pull policies
+- [ ] Image restart policies
 
 # Contact
 
