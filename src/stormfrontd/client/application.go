@@ -131,13 +131,13 @@ func deployApplication(app StormfrontApplication, shouldAppend, shouldWipeData b
 	}
 
 	// dockerCommand := fmt.Sprintf("%s run --net host -d --rm ", config.Config.ContainerEngine)
-	dockerCommand := fmt.Sprintf("%s run --net host -d ", config.Config.ContainerEngine)
+	dockerCommand := fmt.Sprintf("%s run -d ", config.Config.ContainerEngine)
 	dockerCommand += fmt.Sprintf("--name %s ", app.Name)
 	dockerCommand += fmt.Sprintf("--cpus=\"%f\" ", app.CPU)
 	dockerCommand += fmt.Sprintf("--memory=\"%db\" ", int(app.Memory))
 	dockerCommand += fmt.Sprintf("--dns=\"%s\" ", Client.Host)
 	for key, val := range app.Env {
-		dockerCommand += fmt.Sprintf("-e %s=%s ", key, val)
+		dockerCommand += fmt.Sprintf("-e %s='%s' ", key, val)
 	}
 	for to, from := range app.Ports {
 		dockerCommand += fmt.Sprintf("-p %s:%s ", to, from)
