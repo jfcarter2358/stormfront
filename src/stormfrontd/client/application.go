@@ -23,6 +23,7 @@ type StormfrontApplication struct {
 	Env      map[string]string           `json:"env"`
 	Ports    map[string]string           `json:"ports"`
 	Memory   int                         `json:"memory"`
+	Mounts   map[string]string           `json:"mounts"`
 	CPU      float64                     `json:"cpu"`
 	Status   StormfrontApplicationStatus `json:"status"`
 }
@@ -141,6 +142,11 @@ func deployApplication(app StormfrontApplication, shouldAppend bool) {
 	for to, from := range app.Ports {
 		dockerCommand += fmt.Sprintf("-p %s:%s ", to, from)
 	}
+	for src, dst := range app.Mounts {
+		os.RemoveAll(fmt.Sprintf("/var/stormfront/data/%s/%s", app.Name, src))
+		os.MkdirAll(fmt.Sprintf("/var/stormfront/data/%s/%s", app.Name, src), os.ModePerm)
+		dockerCommand += fmt.Sprintf("--mount src=/var/stormfront/data/%s/%s,dst=%s ", app.Name, src, dst)
+	}
 	dockerCommand += app.Image
 	fmt.Printf("Docker command: %s\n", dockerCommand)
 	cmd := exec.Command("/bin/sh", "-c", dockerCommand)
@@ -204,6 +210,12 @@ func destroyApplication(app StormfrontApplication) {
 	err = os.Remove(fmt.Sprintf("/var/stormfront/%s.hosts", app.Name))
 	if err != nil {
 		fmt.Printf("Encountered error removing hosts file: %v\n", err.Error())
+	}
+	for src := range app.Mounts {
+		err := os.RemoveAll(fmt.Sprintf("/var/stormfront/data/%s/%s", app.Name, src))
+		if err != nil {
+			fmt.Printf("Encountered error removing mount data: %v\n", err.Error())
+		}
 	}
 }
 

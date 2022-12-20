@@ -34,12 +34,14 @@ rm uninstall.sh
 
 - [x] Check system health
 - [x] Create application
-- [ ] Update application
 - [x] Restart application
 - [x] Delete application
 - [x] Send command to node
 - [x] Generate join command
 - [x] Check system resource usage
+- [ ] Service router
+- [ ] Application persistence
+- [ ] Persistence replication
 
 # Contact
 
