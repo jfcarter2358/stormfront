@@ -40,8 +40,9 @@ rm uninstall.sh
 - [x] Generate join command
 - [x] Check system resource usage
 - [ ] Service router
-- [ ] Application persistence
+- [x] Application persistence
 - [ ] Persistence replication
+- [ ] Service DNS
 
 # Contact
 
