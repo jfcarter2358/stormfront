@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"stormfrontd/client/auth"
 	"stormfrontd/client/communication"
+	"stormfrontd/client/dns"
 	"stormfrontd/config"
 	"strconv"
 	"time"
@@ -14,7 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jfcarter2358/ceresdb-go/connection"
-	"github.com/openmohan/lightdns"
 	"github.com/pbnjay/memory"
 	"github.com/shirou/gopsutil/cpu"
 )
@@ -216,9 +216,9 @@ func Initialize(joinToken string) error {
 	InitializeRoutes(Client.Type)
 
 	// Initialize DNS server
-	dns := lightdns.NewDNSServer(53)
-	dns.AddZoneData("stormfront.local", nil, lookupFunc, lightdns.DNSForwardLookupZone)
-	go dns.StartAndServe()
+	server := dns.NewDNSServer(53, Client.Host)
+	server.AddZoneData("stormfront", nil, lookupFunc, dns.DNSForwardLookupZone)
+	go server.StartAndServe()
 
 	Client.Server = &http.Server{
 		Addr:    ":" + strconv.Itoa(Client.Port),
