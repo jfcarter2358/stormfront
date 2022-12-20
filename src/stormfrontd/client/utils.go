@@ -130,8 +130,8 @@ func getApplications() ([]StormfrontApplication, error) {
 }
 
 func lookupFunc(domain string) (string, error) {
+	fmt.Printf("DNS request received for %s", domain)
 	parts := strings.Split(domain, ".")
-	fmt.Printf("Split records: %v", parts)
 
 	length := len(parts)
 	hostname := parts[length-2]
@@ -153,6 +153,7 @@ func lookupFunc(domain string) (string, error) {
 					if node.Health != "Healthy" {
 						return "", fmt.Errorf("node %s is unhealthy", node.ID)
 					}
+					fmt.Printf("Routing traffic from %s to %s", domain, node.Host)
 					return node.Host, nil
 				}
 			}
