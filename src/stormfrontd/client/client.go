@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jfcarter2358/ceresdb-go/connection"
+	"github.com/openmohan/lightdns"
 	"github.com/pbnjay/memory"
 	"github.com/shirou/gopsutil/cpu"
 )
@@ -213,6 +214,11 @@ func Initialize(joinToken string) error {
 	Client.Router = gin.Default()
 
 	InitializeRoutes(Client.Type)
+
+	// Initialize DNS server
+	dns := lightdns.NewDNSServer(53)
+	dns.AddZoneData("stormfront.local", nil, lookupFunc, lightdns.DNSForwardLookupZone)
+	dns.StartAndServe()
 
 	Client.Server = &http.Server{
 		Addr:    ":" + strconv.Itoa(Client.Port),

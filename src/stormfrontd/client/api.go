@@ -115,58 +115,11 @@ func GetNodes(c *gin.Context) {
 		return
 	}
 
-	nodeData, err := connection.Query("get record stormfront.node")
+	nodes, err := getNodes()
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
-	}
-	var succession []StormfrontNode
-	var unhealthy []StormfrontNode
-	var unknown []StormfrontNode
-
-	successionBytes, _ := json.Marshal(nodeData[0]["succession"])
-	unhealthyBytes, _ := json.Marshal(nodeData[0]["unhealthy"])
-	unknownBytes, _ := json.Marshal(nodeData[0]["unknown"])
-
-	json.Unmarshal(successionBytes, &succession)
-	json.Unmarshal(unhealthyBytes, &unhealthy)
-	json.Unmarshal(unknownBytes, &unknown)
-
-	nodes := []StormfrontNodeType{}
-
-	nodes = append(nodes, StormfrontNodeType{
-		ID:     Client.Leader.ID,
-		Host:   Client.Leader.Host,
-		Port:   Client.Leader.Port,
-		Type:   "Leader",
-		Health: "Healthy",
-	})
-	for _, node := range succession {
-		nodes = append(nodes, StormfrontNodeType{
-			ID:     node.ID,
-			Host:   node.Host,
-			Port:   node.Port,
-			Type:   "Follower",
-			Health: "Healthy",
-		})
-	}
-	for _, node := range unhealthy {
-		nodes = append(nodes, StormfrontNodeType{
-			ID:     node.ID,
-			Host:   node.Host,
-			Port:   node.Port,
-			Type:   "Follower",
-			Health: "Unhealthy",
-		})
-	}
-	for _, node := range unknown {
-		nodes = append(nodes, StormfrontNodeType{
-			ID:     node.ID,
-			Host:   node.Host,
-			Port:   node.Port,
-			Type:   "Follower",
-			Health: "Unknown",
-		})
 	}
 
 	c.JSON(http.StatusOK, nodes)
@@ -265,14 +218,11 @@ func GetAllApplications(c *gin.Context) {
 		return
 	}
 
-	applicationData, err := connection.Query("get record stormfront.application")
+	applications, err := getApplications()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
-	var applications []StormfrontApplication
-	applicationBytes, _ := json.Marshal(applicationData)
-	json.Unmarshal(applicationBytes, &applications)
 
 	c.JSON(http.StatusOK, applications)
 }
