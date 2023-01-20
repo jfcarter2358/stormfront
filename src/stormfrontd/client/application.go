@@ -135,7 +135,7 @@ func deployApplication(app StormfrontApplication, shouldAppend, shouldWipeData b
 	dockerCommand += fmt.Sprintf("--name %s ", app.Name)
 	dockerCommand += fmt.Sprintf("--cpus=\"%f\" ", app.CPU)
 	dockerCommand += fmt.Sprintf("--memory=\"%db\" ", int(app.Memory))
-	dockerCommand += fmt.Sprintf("--dns=\"%s\" --dns=\"8.8.8.8\"", Client.Host)
+	dockerCommand += fmt.Sprintf("--dns=\"%s\" --dns=\"8.8.8.8\" ", Client.Host)
 	for key, val := range app.Env {
 		dockerCommand += fmt.Sprintf("-e %s='%s' ", key, val)
 	}
