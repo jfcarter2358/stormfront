@@ -54,7 +54,7 @@ func (srv *serveMux) serveDNS(u *udpConnection, request *layers.DNS) {
 	}
 	if h = srv.match(string(request.Questions[0].Name), request.Questions[0].Type); h == nil {
 		//todo: log handler not found
-		fmt.Println("no handler found for ", request.Questions[0].Name)
+		fmt.Println("no handler found for ", string(request.Questions[0].Name))
 	} else {
 		h.serveDNS(u, request)
 	}
