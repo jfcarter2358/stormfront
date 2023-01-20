@@ -85,47 +85,56 @@ func ExecuteCreate(host, port, definition string) error {
 	clientInfo := auth.ReadClientInformation()
 
 	file, _ := ioutil.ReadFile(definition)
-	data := map[string]interface{}{}
+	data := []map[string]interface{}{}
 
 	err := json.Unmarshal([]byte(file), &data)
 	if err != nil {
 		panic(err)
 	}
-	postBody, _ := json.Marshal(data)
-	postBodyBuffer := bytes.NewBuffer(postBody)
 
-	httpClient := &http.Client{}
-	req, _ := http.NewRequest("POST", requestURL, postBodyBuffer)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", clientInfo.AccessToken))
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return err
-	}
+	logging.Info("Creating applications...")
 
-	logging.Debug("Done!")
+	for _, datum := range data {
+		name := datum["name"].(string)
+		logging.Debug(fmt.Sprintf("Creating application %s", name))
 
-	defer resp.Body.Close()
-	//Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	responseBody := string(body)
+		postBody, _ := json.Marshal(datum)
+		postBodyBuffer := bytes.NewBuffer(postBody)
 
-	logging.Debug(fmt.Sprintf("Status code: %v", resp.StatusCode))
-	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
-
-	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusCreated {
-		logging.Success("Done!")
-	} else {
-		var data map[string]string
-		if err := json.Unmarshal([]byte(responseBody), &data); err == nil {
-			if errMessage, ok := data["error"]; ok {
-				logging.Error(errMessage)
-			}
+		httpClient := &http.Client{}
+		req, _ := http.NewRequest("POST", requestURL, postBodyBuffer)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", clientInfo.AccessToken))
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			return err
 		}
-		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
+
+		defer resp.Body.Close()
+		//Read the response body
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		responseBody := string(body)
+
+		logging.Debug(fmt.Sprintf("Status code: %v", resp.StatusCode))
+		logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
+
+		if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusCreated {
+			logging.Success("Done!")
+		} else {
+			var response_data map[string]string
+			if err := json.Unmarshal([]byte(responseBody), &response_data); err == nil {
+				if errMessage, ok := response_data["error"]; ok {
+					logging.Error(errMessage)
+				}
+			}
+			logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
+		}
+		logging.Info("Done!")
 	}
+
+	logging.Success("All applications created")
 
 	return nil
 }
