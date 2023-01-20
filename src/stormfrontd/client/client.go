@@ -218,10 +218,6 @@ func Initialize(joinToken string) error {
 	// Initialize DNS server
 	server := dns.NewDNSServer(53, Client.Host)
 	server.AddZoneData("stormfront", nil, lookupFunc, dns.DNSForwardLookupZone)
-	// server.AddZoneData("com", nil, forwardFunc, dns.DNSForwardLookupZone)
-	// server.AddZoneData("org", nil, forwardFunc, dns.DNSForwardLookupZone)
-	// server.AddZoneData("net", nil, forwardFunc, dns.DNSForwardLookupZone)
-	// server.AddZoneData("io", nil, forwardFunc, dns.DNSForwardLookupZone)
 	go server.StartAndServe()
 
 	Client.Server = &http.Server{

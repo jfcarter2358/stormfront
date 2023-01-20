@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"strings"
 
 	"github.com/jfcarter2358/ceresdb-go/connection"
@@ -128,13 +127,6 @@ func getApplications() ([]StormfrontApplication, error) {
 	json.Unmarshal(applicationBytes, &applications)
 
 	return applications, nil
-}
-
-func forwardFunc(domain string) (string, error) {
-	fmt.Printf("DNS request received for %s", domain)
-	ips, err := net.LookupIP(domain)
-
-	return ips[0].String(), err
 }
 
 func lookupFunc(domain string) (string, error) {
