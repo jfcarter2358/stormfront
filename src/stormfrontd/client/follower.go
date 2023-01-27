@@ -33,7 +33,11 @@ func RegisterFollower(c *gin.Context) {
 		return
 	}
 	clientData, _ := json.Marshal(Client)
-	_, err = connection.Query(fmt.Sprintf(`put record stormfront.client %s %s`, clientIDs[0][".id"].(string), clientData))
+	var clientMap map[string]interface{}
+	json.Unmarshal(clientData, &clientMap)
+	clientMap[".id"] = clientIDs[0][".id"]
+	clientData, _ = json.Marshal(clientMap)
+	_, err = connection.Query(fmt.Sprintf(`put record stormfront.client %s`, clientData))
 	if err != nil {
 		fmt.Printf("database error: %v", err)
 		return
@@ -61,7 +65,11 @@ func DeregisterFollower(c *gin.Context) {
 		return
 	}
 	clientData, _ := json.Marshal(Client)
-	_, err = connection.Query(fmt.Sprintf(`put record stormfront.client %s %s`, clientIDs[0][".id"].(string), clientData))
+	var clientMap map[string]interface{}
+	json.Unmarshal(clientData, &clientMap)
+	clientMap[".id"] = clientIDs[0][".id"]
+	clientData, _ = json.Marshal(clientMap)
+	_, err = connection.Query(fmt.Sprintf(`put record stormfront.client %s`, clientData))
 	if err != nil {
 		fmt.Printf("database error: %v", err)
 		return
