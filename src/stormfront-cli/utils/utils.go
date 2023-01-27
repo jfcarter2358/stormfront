@@ -41,10 +41,10 @@ func PrintTable(data []map[string]interface{}, headers, types []string) {
 	for _, header := range headers {
 		widths = append(widths, len(header))
 	}
-	for idx, datum := range data {
-		for jdx, header := range headers {
-			if len(typeToString(datum[header], types[idx])) > widths[jdx] {
-				widths[jdx] = len(datum[header].(string))
+	for _, datum := range data {
+		for idx, header := range headers {
+			if len(typeToString(datum[header], types[idx])) > widths[idx] {
+				widths[idx] = len(datum[header].(string))
 			}
 		}
 	}
@@ -71,9 +71,9 @@ func PrintTable(data []map[string]interface{}, headers, types []string) {
 	output += "\n"
 
 	// Print out data
-	for idx, datum := range data {
-		for jdx, header := range headers {
-			delta := widths[jdx] - len(datum[header].(string))
+	for _, datum := range data {
+		for idx, header := range headers {
+			delta := widths[idx] - len(datum[header].(string))
 			if idx < len(headers)-1 {
 				output += typeToString(datum[header], types[idx]) + strings.Repeat(" ", delta) + spacer
 			} else {
