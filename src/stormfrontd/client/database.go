@@ -15,7 +15,7 @@ var Collections = map[string]string{
 	"application": `{"id":"STRING","node":"STRING","name":"STRING","image":"STRING","hostname":"STRING","env":"DICT","ports":"DICT","mounts":"DICT","memory":"INT","cpu":"FLOAT","status":"DICT"}`,
 	"leader":      `{"id":"STRING","succession":"LIST","unhealthy":"LIST","unknown":"LIST"}`,
 	"node":        `{"id":"STRING","host":"STRING","port":"INT","system":"DICT","health":"STRING"}`,
-	"client":      `{"id":"STRING","type":"STRING","leader":"DICT","succession":"LIST","unhealthy":"LIST","unknown":"LIST,"updated":"STRING","host":"STRING","port":"INT","healthy":"BOOL","applications":"LIST","system":"DICT"}`,
+	"client":      `{"id":"STRING","type":"STRING","leader":"DICT","succession":"LIST","unhealthy":"LIST","unknown":"LIST","updated":"STRING","host":"STRING","port":"INT","healthy":"BOOL","applications":"LIST","system":"DICT"}`,
 }
 
 // ID           string                  `json:"id" yaml:"id"`
