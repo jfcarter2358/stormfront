@@ -154,7 +154,7 @@ func ExecuteClient(host, port, id, output string) error {
 				var data []map[string]interface{}
 				json.Unmarshal([]byte(responseBody), &data)
 				contents, _ := yaml.Marshal(&data)
-				fmt.Println(contents)
+				fmt.Println(string(contents))
 			} else {
 				var data map[string]interface{}
 				json.Unmarshal([]byte(responseBody), &data)
