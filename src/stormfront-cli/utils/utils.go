@@ -73,7 +73,7 @@ func PrintTable(data []map[string]interface{}, headers, types []string) {
 	// Print out data
 	for _, datum := range data {
 		for idx, header := range headers {
-			delta := widths[idx] - len(datum[header].(string))
+			delta := widths[idx] - len(typeToString(datum[header], types[idx]))
 			if idx < len(headers)-1 {
 				output += typeToString(datum[header], types[idx]) + strings.Repeat(" ", delta) + spacer
 			} else {
