@@ -188,6 +188,10 @@ func InitializeLeader() error {
 		panic(err)
 	}
 
+	Client.Succession = []StormfrontNode{}
+	Client.Unhealthy = []StormfrontNode{}
+	Client.Unknown = []StormfrontNode{}
+	Client.Applications = []StormfrontApplication{}
 	clientData, _ := json.Marshal(Client)
 	_, err = connection.Query(fmt.Sprintf(`post record stormfront.client %s`, clientData))
 	if err != nil {
