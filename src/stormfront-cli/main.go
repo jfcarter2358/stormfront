@@ -15,16 +15,13 @@ import (
 
 var HelpText = fmt.Sprintf(`usage: stormfront <command> [-l|--log-level <log level>] [-h|--help]
 commands:
-	api-token           Manage cluster API tokens
-	app                 Manage applications deployed to Stormfront
-	client              Interact with a running client
-	daemon              Interact with the stormfront daemon
-	debug               Execute debugging actions against a running client
-	down                Destroy a running stormfront client
-	get-join-command    Generate a join command to add a client as a follower
-	join                Deploy a follower client that joins a leader at a specified location
-	restart             Restart a running stormfront client
-	up                  Start up a stormfront client
+	deploy           	Deploy a client or application
+	destroy             Destroy a running client or application
+	get                 Get Stormfront cluster objects
+	join                Join an existing Stormfront cluster
+	logs                Get logs for a running application
+	restart             Restart a running client or application
+	token               Manage cluster API and join tokens
 arguments:
 	-l|--log-level      Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help           Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
