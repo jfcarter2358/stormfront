@@ -8,7 +8,7 @@
 
 # About
 
-**TODO**
+Stormfront is a container orchestration system designed around 
 
 # Install
 
@@ -41,9 +41,10 @@ rm uninstall.sh
 - [x] Check system resource usage
 - [x] Application persistence
 - [ ] Persistence replication
-- [ ] Service DNS
+- [x] Service DNS
 - [ ] Image pull policies
 - [ ] Image restart policies
+- [ ] Disaster recovery
 
 # Contact
 

@@ -24,6 +24,32 @@ func GetJoinCommand(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"join_command": joinCommand})
 }
 
+func GetJoinToken(c *gin.Context) {
+	joinToken := auth.GenToken(128)
+	JoinTokens = append(JoinTokens, joinToken)
+
+	c.JSON(http.StatusOK, gin.H{"token": joinToken})
+}
+
+func RevokeJoinToken(c *gin.Context) {
+	token := c.Param("token")
+
+	found := false
+	for idx, joinToken := range JoinTokens {
+		if joinToken == token {
+			JoinTokens = append(JoinTokens[:idx], JoinTokens[idx+1:]...)
+			found = true
+		}
+	}
+
+	if found {
+		c.Status(http.StatusOK)
+		return
+	}
+
+	c.Status(http.StatusNotFound)
+}
+
 func GetAccessToken(c *gin.Context) {
 	token := c.Request.Header.Get("Authorization")
 	splitToken := strings.Split(token, "Bearer ")
@@ -106,17 +132,14 @@ func GetState(c *gin.Context) {
 	c.JSON(http.StatusOK, Client)
 }
 
-func GetNodes(c *gin.Context) {
-	token := c.Request.Header.Get("X-Stormfront-API")
+func GetAllNodes(c *gin.Context) {
 
-	status := auth.VerifyAPIToken(token)
-	if status != http.StatusOK {
-		c.Status(status)
+	if Client.Type != "Leader" {
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/node", Client.Leader.Host, Client.Leader.Port))
 		return
 	}
 
 	nodes, err := getNodes()
-
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
@@ -125,6 +148,27 @@ func GetNodes(c *gin.Context) {
 	c.JSON(http.StatusOK, nodes)
 }
 
+func GetNode(c *gin.Context) {
+	id := c.Param("id")
+
+	if Client.Type != "Leader" {
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/node/%s", Client.Leader.Host, Client.Leader.Port, id))
+		return
+	}
+
+	data, err := connection.Query(fmt.Sprintf(`get record stormfront.node | filter id = '%s'`, id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	if len(data) == 0 {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	c.JSON(http.StatusOK, data[0])
+}
 func CreateApplication(c *gin.Context) {
 
 	if Client.Type != "Leader" {
@@ -142,16 +186,9 @@ func CreateApplication(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
-	var succession []StormfrontNode
-	successionBytes, _ := json.Marshal(nodeData[0]["succession"])
-	json.Unmarshal(successionBytes, &succession)
-
-	nodes := append(succession, StormfrontNode{
-		ID:     Client.ID,
-		Host:   Client.Host,
-		Port:   Client.Port,
-		System: Client.System,
-	})
+	var nodes []StormfrontNode
+	nodeBytes, _ := json.Marshal(nodeData)
+	json.Unmarshal(nodeBytes, &nodes)
 
 	applicationData, err := connection.Query("get record stormfront.application")
 	if err != nil {
@@ -172,6 +209,7 @@ func CreateApplication(c *gin.Context) {
 			}
 		}
 	}
+
 	if app.Node != "" {
 		for _, node := range nodes {
 			if node.ID != app.Node {
@@ -205,7 +243,7 @@ func CreateApplication(c *gin.Context) {
 				c.Status(http.StatusCreated)
 				return
 			}
-			fmt.Printf("Insufficient resources to schedule on node %s\n", node.ID)
+			fmt.Printf("Insufficient resources to schedule on node %s: Available CPU: %v, requested CPU: %v, available memory: %v, requested memory: %v\n", node.ID, node.System.CPUAvailable, app.CPU, node.System.MemoryAvailable, app.Memory)
 		}
 	}
 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Insufficient resources to schedule"})
@@ -442,4 +480,41 @@ func RevokeAPIToken(c *gin.Context) {
 	}
 
 	c.Status(http.StatusOK)
+}
+
+func GetClient(c *gin.Context) {
+	id := c.Param("id")
+
+	if Client.Type != "Leader" {
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/client/%s", Client.Leader.Host, Client.Leader.Port, id))
+		return
+	}
+
+	data, err := connection.Query(fmt.Sprintf(`get record stormfront.client | filter id = '%s'`, id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	if len(data) == 0 {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	c.JSON(http.StatusOK, data[0])
+}
+
+func GetAllClients(c *gin.Context) {
+	if Client.Type != "Leader" {
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/client", Client.Leader.Host, Client.Leader.Port))
+		return
+	}
+
+	clients, err := getClients()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	c.JSON(http.StatusOK, clients)
 }

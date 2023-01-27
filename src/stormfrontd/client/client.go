@@ -15,8 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jfcarter2358/ceresdb-go/connection"
-	"github.com/pbnjay/memory"
-	"github.com/shirou/gopsutil/cpu"
 )
 
 var Client StormfrontClient
@@ -29,185 +27,20 @@ const UPDATE_RETRY_DELAY = 1
 const UPDATE_MAX_TRIES = 3
 
 type StormfrontClient struct {
-	ID           string                  `json:"id"`
-	Type         string                  `json:"type"`
-	Leader       StormfrontNode          `json:"leader"`
-	Succession   []StormfrontNode        `json:"succession"`
-	Unhealthy    []StormfrontNode        `json:"unhealthy"`
-	Unknown      []StormfrontNode        `json:"unknown"`
-	Updated      string                  `json:"updated"`
-	Host         string                  `json:"host"`
-	Port         int                     `json:"port"`
-	Healthy      bool                    `json:"healthy"`
-	Router       *gin.Engine             `json:"-"`
-	Server       *http.Server            `json:"-"`
-	Applications []StormfrontApplication `json:"applications"`
-	System       StormfrontSystemInfo    `json:"system"`
-}
-
-type StormfrontSystemInfo struct {
-	MemoryUsage     float64 `json:"memory_usage"`
-	MemoryAvailable int     `json:"memory_available"`
-	CPUUsage        float64 `json:"cpu_usage"`
-	CPUAvailable    float64 `json:"cpu_available"`
-	Cores           int     `json:"cores"`
-	TotalMemory     int     `json:"total_memory"`
-	FreeMemory      int     `json:"free_memory"`
-	TotalDiskSpace  int     `json:"total_disk"`
-	FreeDiskSpace   int     `json:"free_disk"`
-}
-
-type StormfrontNode struct {
-	ID     string               `json:"id"`
-	Host   string               `json:"host"`
-	Port   int                  `json:"port"`
-	System StormfrontSystemInfo `json:"system"`
-}
-
-type StormfrontNodeType struct {
-	ID     string `json:"id"`
-	Host   string `json:"host"`
-	Port   int    `json:"port"`
-	Type   string `json:"type"`
-	Health string `json:"health"`
-}
-
-func updateSystemInfo() error {
-	systemInfo := StormfrontSystemInfo{}
-
-	cores, err := cpu.Counts(true)
-	if err != nil {
-		return err
-	}
-	usage, err := cpu.Percent(time.Second, false)
-	if err != nil {
-		return err
-	}
-	totalMemory := memory.TotalMemory()
-	freeMemory := memory.FreeMemory()
-
-	systemInfo.Cores = cores
-	systemInfo.CPUUsage = usage[0]
-	systemInfo.TotalMemory = int(totalMemory)
-	systemInfo.FreeMemory = int(freeMemory)
-	if systemInfo.TotalMemory != 0 {
-		systemInfo.MemoryUsage = float64(freeMemory) / float64(totalMemory)
-	} else {
-		systemInfo.MemoryUsage = -1
-	}
-
-	memoryReserved := 0
-	cpuReserved := 0.0
-	for _, application := range Client.Applications {
-		if application.Node == Client.ID {
-			memoryReserved += application.Memory
-			cpuReserved += application.CPU
-		}
-	}
-
-	diskInfo := DiskUsage("/")
-	systemInfo.FreeDiskSpace = int(diskInfo.Free)
-	systemInfo.TotalDiskSpace = int(diskInfo.All)
-
-	memoryUsed := (float64(systemInfo.TotalMemory) * config.Config.ReservedMemoryPercentage) + float64(memoryReserved)
-	systemInfo.MemoryAvailable = systemInfo.TotalMemory - int(memoryUsed)
-
-	cpuUsed := (float64(systemInfo.Cores) * config.Config.ReservedCPUPercentage) + cpuReserved
-	systemInfo.CPUAvailable = float64(systemInfo.Cores) - cpuUsed
-
-	Client.System = systemInfo
-
-	return nil
-}
-
-func updateSuccession() error {
-	AuthClient = auth.ReadClientInformation()
-
-	nodeData, err := connection.Query("get record stormfront.node")
-	if len(nodeData) == 0 {
-		log.Println("No followers to update")
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	var succession []StormfrontNode
-	successionBytes, _ := json.Marshal(nodeData[0]["succession"])
-	json.Unmarshal(successionBytes, &succession)
-
-	newSuccession := []StormfrontNode{}
-	newUnhealthy := []StormfrontNode{}
-	newUnknown := []StormfrontNode{}
-
-	for _, successor := range succession {
-		foundSuccessor := false
-		for counter := 0; counter < UPDATE_MAX_TRIES; counter++ {
-			fmt.Printf("Trying to reach follower at %s:%v/api/health, %v of %v\n", successor.Host, successor.Port, counter+1, UPDATE_MAX_TRIES)
-			status, body, err := communication.Get(successor.Host, successor.Port, "api/health", AuthClient)
-			if err != nil {
-				fmt.Printf("Encountered error: %v\n", err.Error())
-				time.Sleep(UPDATE_RETRY_DELAY * time.Second)
-				continue
-			}
-			if status != http.StatusOK {
-				fmt.Printf("Encountered error: %v\n", err.Error())
-				time.Sleep(UPDATE_RETRY_DELAY * time.Second)
-				continue
-			}
-			json.Unmarshal([]byte(body), &successor.System)
-			foundSuccessor = true
-			break
-		}
-		if foundSuccessor {
-			newSuccession = append(newSuccession, successor)
-		} else {
-			newUnknown = append(newUnknown, successor)
-		}
-	}
-
-	reconcileApplications()
-
-	newSuccession = dedupeNodes(newSuccession)
-	newUnhealthy = dedupeNodes(newUnhealthy)
-	newUnknown = dedupeNodes(newUnknown)
-
-	nodeData, err = connection.Query("get record stormfront.node")
-	if err != nil {
-		log.Printf("Unable to contact database during node get, changes to node status not recorded: %v\n", err)
-		return err
-	}
-	nodeData[0]["succession"] = newSuccession
-	nodeData[0]["unhealthy"] = newUnhealthy
-	nodeData[0]["unknown"] = newUnknown
-
-	payload, _ := json.Marshal(nodeData)
-
-	_, err = connection.Query(fmt.Sprintf("put record stormfront.node %s", payload))
-	if err != nil {
-		log.Printf("Unable to contact database during node put, changes to node status not recorded: %v\n", err)
-		return err
-	}
-
-	return nil
-}
-
-func HealthCheckFollower() {
-	for {
-		reconcileApplications()
-		updateApplicationStatus()
-		time.Sleep(HEALTH_CHECK_DELAY * time.Second)
-	}
-}
-
-func HealthCheckLeader() {
-	for {
-		err := updateSuccession()
-		if err != nil {
-			fmt.Printf("Encountered error updating succession: %v", err)
-		}
-		updateApplicationStatus()
-		time.Sleep(HEALTH_CHECK_DELAY * time.Second)
-	}
+	ID           string                  `json:"id" yaml:"id"`
+	Type         string                  `json:"type" yaml:"type"`
+	Leader       StormfrontNode          `json:"leader" yaml:"leader"`
+	Succession   []StormfrontNode        `json:"succession" yaml:"succession"`
+	Unhealthy    []StormfrontNode        `json:"unhealthy" yaml:"unhealthy"`
+	Unknown      []StormfrontNode        `json:"unknown" yaml:"unknown"`
+	Updated      string                  `json:"updated" yaml:"updated"`
+	Host         string                  `json:"host" yaml:"host"`
+	Port         int                     `json:"port" yaml:"port"`
+	Healthy      bool                    `json:"healthy" yaml:"healthy"`
+	Router       *gin.Engine             `json:"-" yaml:"-"`
+	Server       *http.Server            `json:"-" yaml:"-"`
+	Applications []StormfrontApplication `json:"applications" yaml:"applications"`
+	System       StormfrontSystemInfo    `json:"system" yaml:"system"`
 }
 
 func Initialize(joinToken string) error {
@@ -234,82 +67,136 @@ func Initialize(joinToken string) error {
 		}
 	}()
 
-	if Client.Type == "Follower" {
-		if config.Config.CeresDBHost == "" {
-			config.Config.CeresDBHost = Client.Host
-		}
-		connection.Initialize(CERESDB_USERNAME, config.Config.CeresDBPassword, config.Config.CeresDBHost, config.Config.CeresDBPort)
-
-		Client.ID = uuid.New().String()
-
-		AuthClient = auth.ClientInformation{}
-		AuthClient.AccessToken = joinToken
-
-		status, body, err := communication.Get(Client.Leader.Host, Client.Leader.Port, "auth/token", AuthClient)
+	if Client.Type == "Leader" {
+		err := InitializeLeader()
 		if err != nil {
-			fmt.Printf("Encountered error: %v\n", err.Error())
-			return err
+			panic(err)
 		}
-		if status != http.StatusOK {
-			return fmt.Errorf("unable to contact client at %s:%v, received status code %v", Client.Leader.Host, Client.Leader.Port, status)
-		}
-
-		json.Unmarshal([]byte(body), &AuthClient)
-
-		auth.WriteClientInformation(AuthClient)
-
-		node := StormfrontNode{ID: Client.ID, Host: Client.Host, Port: Client.Port}
-
-		postBody, _ := json.Marshal(node)
-
-		status, _, err = communication.Post(Client.Leader.Host, Client.Leader.Port, "api/register", AuthClient, postBody)
-		if err != nil {
-			fmt.Printf("Encountered error: %v\n", err.Error())
-			return err
-		}
-		if status != http.StatusOK {
-			return fmt.Errorf("unable to contact client at %s:%v, received status code %v", Client.Leader.Host, Client.Leader.Port, status)
-		}
-
-		// Check follower healths
-		go HealthCheckFollower()
 	} else {
-		time.Sleep(5 * time.Second)
-		err := CreateDatabases()
-
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			panic(err)
-		}
-
-		Client.ID = Client.Leader.ID
-		AuthClient = auth.CreateClientInformation()
-		auth.WriteClientInformation(AuthClient)
-
-		authData, _ := json.Marshal(AuthClient)
-		_, err = connection.Query(fmt.Sprintf("post record stormfront.auth %s", authData))
-
+		err := InitializeFollower(joinToken)
 		if err != nil {
 			panic(err)
 		}
-
-		dbDataRaw := map[string]interface{}{"id": Client.ID, "succession": make([]interface{}, 0), "unhealthy": make([]interface{}, 0), "unknown": make([]interface{}, 0)}
-		dbData, _ := json.Marshal(dbDataRaw)
-
-		_, err = connection.Query(fmt.Sprintf("post record stormfront.node %s", dbData))
-
-		if err != nil {
-			panic(err)
-		}
-
-		// Check follower healths
-		go HealthCheckLeader()
 	}
 
 	err := updateSystemInfo()
 	if err != nil {
 		panic(err)
 	}
+
+	return nil
+}
+
+func InitializeFollower(joinToken string) error {
+	if config.Config.CeresDBHost == "" {
+		config.Config.CeresDBHost = Client.Host
+	}
+	connection.Initialize(CERESDB_USERNAME, config.Config.CeresDBPassword, config.Config.CeresDBHost, config.Config.CeresDBPort)
+
+	Client.ID = uuid.New().String()
+
+	AuthClient = auth.ClientInformation{}
+	AuthClient.AccessToken = joinToken
+
+	status, body, err := communication.Get(Client.Leader.Host, Client.Leader.Port, "auth/token", AuthClient)
+	if err != nil {
+		fmt.Printf("Encountered error: %v\n", err.Error())
+		return err
+	}
+	if status != http.StatusOK {
+		return fmt.Errorf("unable to contact client at %s:%v, received status code %v", Client.Leader.Host, Client.Leader.Port, status)
+	}
+
+	json.Unmarshal([]byte(body), &AuthClient)
+
+	auth.WriteClientInformation(AuthClient)
+
+	node := StormfrontNode{ID: Client.ID, Host: Client.Host, Port: Client.Port, System: StormfrontSystemInfo{}, Health: "Healthy", Type: "Follower"}
+
+	postBody, _ := json.Marshal(node)
+
+	status, _, err = communication.Post(Client.Leader.Host, Client.Leader.Port, "api/register", AuthClient, postBody)
+	if err != nil {
+		fmt.Printf("Encountered error: %v\n", err.Error())
+		return err
+	}
+	if status != http.StatusOK {
+		return fmt.Errorf("unable to contact client at %s:%v, received status code %v", Client.Leader.Host, Client.Leader.Port, status)
+	}
+
+	clientData, _ := json.Marshal(Client)
+	_, err = connection.Query(fmt.Sprintf(`post record stormfront.client %s`, clientData))
+	if err != nil {
+		fmt.Printf("database error: %v", err)
+		return err
+	}
+
+	// Check follower healths
+	go HealthCheckFollower()
+
+	return nil
+}
+
+func InitializeLeader() error {
+	time.Sleep(5 * time.Second)
+	err := CreateDatabases()
+
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		panic(err)
+	}
+
+	Client.ID = Client.Leader.ID
+	AuthClient = auth.CreateClientInformation()
+	auth.WriteClientInformation(AuthClient)
+
+	authData, _ := json.Marshal(AuthClient)
+	_, err = connection.Query(fmt.Sprintf("post record stormfront.auth %s", authData))
+
+	if err != nil {
+		panic(err)
+	}
+
+	leaderDataRaw := StormfrontLeader{
+		ID:         Client.ID,
+		Succession: make([]string, 0),
+		Healthy:    make([]string, 0),
+		Unhealthy:  make([]string, 0),
+		Unknown:    make([]string, 0),
+	}
+	leaderData, _ := json.Marshal(leaderDataRaw)
+
+	_, err = connection.Query(fmt.Sprintf("post record stormfront.leader %s", leaderData))
+
+	if err != nil {
+		panic(err)
+	}
+
+	nodeDataRaw := StormfrontNode{
+		ID:     Client.ID,
+		Host:   Client.Host,
+		Port:   Client.Port,
+		System: StormfrontSystemInfo{},
+		Health: "Healthy",
+		Type:   "Leader",
+	}
+	nodeData, _ := json.Marshal(nodeDataRaw)
+
+	_, err = connection.Query(fmt.Sprintf("post record stormfront.node %s", nodeData))
+
+	if err != nil {
+		panic(err)
+	}
+
+	clientData, _ := json.Marshal(Client)
+	_, err = connection.Query(fmt.Sprintf(`post record stormfront.client %s`, clientData))
+	if err != nil {
+		fmt.Printf("database error: %v", err)
+		return err
+	}
+
+	// Check follower healths
+	go HealthCheckLeader()
 
 	return nil
 }

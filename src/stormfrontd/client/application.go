@@ -14,23 +14,24 @@ import (
 )
 
 type StormfrontApplication struct {
-	ID       string                      `json:"id"`
-	Node     string                      `json:"node"`
-	Name     string                      `json:"name"`
-	Image    string                      `json:"image"`
-	Hostname string                      `json:"hostname"`
-	Env      map[string]string           `json:"env"`
-	Ports    map[string]string           `json:"ports"`
-	Memory   int                         `json:"memory"`
-	Mounts   map[string]string           `json:"mounts"`
-	CPU      float64                     `json:"cpu"`
-	Status   StormfrontApplicationStatus `json:"status"`
+	ID        string                      `json:"id" yaml:"id"`
+	Node      string                      `json:"node" yaml:"node"`
+	Name      string                      `json:"name" yaml:"name"`
+	Image     string                      `json:"image" yaml:"image"`
+	Hostname  string                      `json:"hostname" yaml:"hostname"`
+	Env       map[string]string           `json:"env" yaml:"env"`
+	Ports     map[string]string           `json:"ports" yaml:"ports"`
+	Memory    int                         `json:"memory" yaml:"memory"`
+	Mounts    map[string]string           `json:"mounts" yaml:"mounts"`
+	CPU       float64                     `json:"cpu" yaml:"cpu"`
+	Status    StormfrontApplicationStatus `json:"status" yaml:"status"`
+	Namespace string                      `json:"namespace" yaml:"namespace"`
 }
 
 type StormfrontApplicationStatus struct {
-	CPU    string `json:"cpu"`
-	Memory string `json:"memory"`
-	Status string `json:"status"`
+	CPU    string `json:"cpu" yaml:"cpu"`
+	Memory string `json:"memory" yaml:"memory"`
+	Status string `json:"status" yaml:"status"`
 }
 
 func updateApplicationStatus() error {
@@ -184,6 +185,18 @@ func deployApplication(app StormfrontApplication, shouldAppend, shouldWipeData b
 
 	if shouldAppend {
 		Client.Applications = append(Client.Applications, app)
+
+		clientIDs, err := connection.Query(fmt.Sprintf(`get record stormfront.client .id | filter id = "%s"`, Client.ID))
+		if err != nil {
+			fmt.Printf("database error: %v", err)
+			return
+		}
+		clientData, _ := json.Marshal(Client)
+		_, err = connection.Query(fmt.Sprintf(`put record stormfront.client %s %s`, clientIDs[0][".id"].(string), clientData))
+		if err != nil {
+			fmt.Printf("database error: %v", err)
+			return
+		}
 	}
 }
 
@@ -312,5 +325,16 @@ func reconcileApplications() {
 				continue
 			}
 		}
+	}
+	clientIDs, err := connection.Query(fmt.Sprintf(`get record stormfront.client .id | filter id = "%s"`, Client.ID))
+	if err != nil {
+		fmt.Printf("database error: %v", err)
+		return
+	}
+	clientData, _ := json.Marshal(Client)
+	_, err = connection.Query(fmt.Sprintf(`put record stormfront.client %s %s`, clientIDs[0][".id"].(string), clientData))
+	if err != nil {
+		fmt.Printf("database error: %v", err)
+		return
 	}
 }

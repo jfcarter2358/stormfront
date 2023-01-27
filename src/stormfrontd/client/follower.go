@@ -27,6 +27,18 @@ func RegisterFollower(c *gin.Context) {
 		return
 	}
 
+	clientIDs, err := connection.Query(fmt.Sprintf(`get record stormfront.client .id | filter id = "%s"`, Client.ID))
+	if err != nil {
+		fmt.Printf("database error: %v", err)
+		return
+	}
+	clientData, _ := json.Marshal(Client)
+	_, err = connection.Query(fmt.Sprintf(`put record stormfront.client %s %s`, clientIDs[0][".id"].(string), clientData))
+	if err != nil {
+		fmt.Printf("database error: %v", err)
+		return
+	}
+
 	c.Status(http.StatusOK)
 }
 
@@ -40,6 +52,18 @@ func DeregisterFollower(c *gin.Context) {
 	_, err := connection.Query(fmt.Sprintf(`get record stormfront.node | jq 'del(.[0].succession[] | select(.host == "%s"))' | put record stormfront.node`, follower.Host))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	clientIDs, err := connection.Query(fmt.Sprintf(`get record stormfront.client .id | filter id = "%s"`, Client.ID))
+	if err != nil {
+		fmt.Printf("database error: %v", err)
+		return
+	}
+	clientData, _ := json.Marshal(Client)
+	_, err = connection.Query(fmt.Sprintf(`put record stormfront.client %s %s`, clientIDs[0][".id"].(string), clientData))
+	if err != nil {
+		fmt.Printf("database error: %v", err)
 		return
 	}
 

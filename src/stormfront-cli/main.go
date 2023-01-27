@@ -3,12 +3,13 @@ package main
 import (
 	"fmt"
 	"os"
-	"stormfront-cli/api_token"
-	"stormfront-cli/application"
-	"stormfront-cli/client"
-	"stormfront-cli/daemon"
-	"stormfront-cli/debug"
+	"stormfront-cli/deploy"
+	"stormfront-cli/destroy"
+	"stormfront-cli/get"
+	"stormfront-cli/join"
 	"stormfront-cli/logging"
+	"stormfront-cli/logs"
+	"stormfront-cli/token"
 	"stormfront-cli/utils"
 )
 
@@ -26,7 +27,7 @@ commands:
 	up                  Start up a stormfront client
 arguments:
 	-l|--log-level      Sets the log level of the CLI. valid levels are: %s, defaults to %s
-	-h|--help           Show this help message and exit`, logging.GetDefaults(), logging.INFO_NAME)
+	-h|--help           Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 
 func main() {
 
@@ -65,76 +66,42 @@ func main() {
 	}
 
 	switch args[1] {
-	case "api-token":
-		api_token.ParseAPITokenArgs(args[1:])
-	case "app":
-		application.ParseApplicationArgs(args[1:])
-	case "daemon":
-		daemon.ParseDaemonArgs(args[1:])
-	case "client":
-		client.ParseClientArgs(args[1:])
-	case "debug", "db":
-		debug.ParseDebugArgs(args[1:])
-	case "up":
-		host, port, err := ParseUpArgs(args[2:])
-		if err != nil {
-			logging.Error(err.Error())
-			fmt.Println(HelpText)
-			os.Exit(1)
-		}
-		err = ExecuteUp(host, port)
-		if err != nil {
-			logging.Error(err.Error())
-			os.Exit(1)
-		}
-	case "down":
-		host, port, err := ParseDownArgs(args[2:])
-		if err != nil {
-			logging.Error(err.Error())
-			fmt.Println(HelpText)
-			os.Exit(1)
-		}
-		err = ExecuteDown(host, port)
-		if err != nil {
-			logging.Error(err.Error())
-			os.Exit(1)
-		}
-	case "get-join-command":
-		host, port, err := ParseGetJoinCommandArgs(args[2:])
-		if err != nil {
-			logging.Error(err.Error())
-			fmt.Println(HelpText)
-			os.Exit(1)
-		}
-		err = ExecuteGetJoinCommand(host, port)
-		if err != nil {
-			logging.Error(err.Error())
-			os.Exit(1)
-		}
+	case "deploy":
+		deploy.ParseDeployArgs(args[1:])
+	case "destroy":
+		destroy.ParseDestroyArgs(args[1:])
+	case "get":
+		get.ParseGetArgs(args[1:])
 	case "join":
-		host, port, leader, joinToken, err := ParseJoinArgs(args[2:])
+		host, port, leader, joinToken, err := join.ParseJoinArgs(args[1:])
 		if err != nil {
 			logging.Error(err.Error())
 			fmt.Println(HelpText)
 			os.Exit(1)
 		}
-		err = ExecuteJoin(host, port, leader, joinToken)
+		err = join.ExecuteJoin(host, port, leader, joinToken)
+		if err != nil {
+			logging.Error(err.Error())
+			os.Exit(1)
+		}
+	case "logs":
+		host, port, id, err := logs.ParseLogsArgs(args[1:])
+		if err != nil {
+			logging.Error(err.Error())
+			fmt.Println(HelpText)
+			os.Exit(1)
+		}
+		err = logs.ExecuteLogs(host, port, id)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)
 		}
 	case "restart":
-		host, port, err := ParseRestartArgs(args[2:])
-		if err != nil {
-			logging.Error(err.Error())
-			fmt.Println(HelpText)
-			os.Exit(1)
-		}
-		err = ExecuteRestart(host, port)
-		if err != nil {
-			logging.Error(err.Error())
-			os.Exit(1)
-		}
+		get.ParseGetArgs(args[1:])
+	case "token":
+		token.ParseTokenArgs(args[1:])
+	// case "update":
+	// 	update.ParseUpdateArgs(args[1:])
 	default:
 		logging.Error(fmt.Sprintf("Invalid argument: %s\n", args[1]))
 		fmt.Println(HelpText)

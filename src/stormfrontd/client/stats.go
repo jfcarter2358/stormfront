@@ -4,9 +4,9 @@ import "syscall"
 
 // Creating structure for DiskStatus
 type DiskStatus struct {
-	All  uint64 `json:"All"`
-	Used uint64 `json:"Used"`
-	Free uint64 `json:"Free"`
+	All  uint64 `json:"All" yaml:"All"`
+	Used uint64 `json:"Used" yaml:"Used"`
+	Free uint64 `json:"Free" yaml:"Free"`
 }
 
 // Function to get

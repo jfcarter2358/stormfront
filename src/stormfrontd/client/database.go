@@ -13,8 +13,25 @@ var Collections = map[string]string{
 	"auth":        `{"id":"STRING","access_token":"STRING","refresh_token":"STRING","token_expiration":"STRING","token_issued":"STRING"}`,
 	"api":         `{"token":"STRING"}`,
 	"application": `{"id":"STRING","node":"STRING","name":"STRING","image":"STRING","hostname":"STRING","env":"DICT","ports":"DICT","mounts":"DICT","memory":"INT","cpu":"FLOAT","status":"DICT"}`,
-	"node":        `{"id":"STRING","succession":"LIST","unhealthy":"LIST","unknown":"LIST"}`,
+	"leader":      `{"id":"STRING","succession":"LIST","unhealthy":"LIST","unknown":"LIST"}`,
+	"node":        `{"id":"STRING","host":"STRING","port":"INT","system":"DICT","health":"STRING"}`,
+	"client":      `{"id":"STRING","type":"STRING","leader":"DICT","succession":"LIST","unhealthy":"LIST","unknown":"LIST,"updated":"STRING","host":"STRING","port":"INT","healthy":"BOOL","applications":"LIST","system":"DICT"}`,
 }
+
+// ID           string                  `json:"id" yaml:"id"`
+// 	Type         string                  `json:"type" yaml:"type"`
+// 	Leader       StormfrontNode          `json:"leader" yaml:"leader"`
+// 	Succession   []StormfrontNode        `json:"succession" yaml:"succession"`
+// 	Unhealthy    []StormfrontNode        `json:"unhealthy" yaml:"unhealthy"`
+// 	Unknown      []StormfrontNode        `json:"unknown" yaml:"unknown"`
+// 	Updated      string                  `json:"updated" yaml:"updated"`
+// 	Host         string                  `json:"host" yaml:"host"`
+// 	Port         int                     `json:"port" yaml:"port"`
+// 	Healthy      bool                    `json:"healthy" yaml:"healthy"`
+// 	Router       *gin.Engine             `json:"-" yaml:"-"`
+// 	Server       *http.Server            `json:"-" yaml:"-"`
+// 	Applications []StormfrontApplication `json:"applications" yaml:"applications"`
+// 	System       StormfrontSystemInfo    `json:"system" yaml:"system"`
 
 func CreateDatabases() error {
 	fmt.Println("Initializing CeresDB connection")

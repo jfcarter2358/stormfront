@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jfcarter2358/ceresdb-go/connection"
 )
 
 func Deploy() error {
@@ -96,6 +97,18 @@ func Destroy() error {
 			return fmt.Errorf("unable to contact client at %s:%v, received status code %v", client.Client.Leader.Host, client.Client.Leader.Port, resp.StatusCode)
 		}
 	}
+
+	clientIDs, err := connection.Query(fmt.Sprintf(`get record stormfront.client .id | filter id = "%s"`, client.Client.ID))
+	if err != nil {
+		fmt.Printf("database error: %v", err)
+		return err
+	}
+	_, err = connection.Query(fmt.Sprintf(`delete record stormfront.client %s`, clientIDs[0][".id"].(string)))
+	if err != nil {
+		fmt.Printf("database error: %v", err)
+		return err
+	}
+
 	return nil
 }
 
