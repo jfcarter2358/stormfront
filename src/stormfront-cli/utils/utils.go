@@ -21,9 +21,9 @@ func typeToString(value interface{}, valueType string) string {
 	case "string":
 		return value.(string)
 	case "int":
-		return fmt.Sprintf("%v", value.(int))
+		return fmt.Sprintf("%v", int(value.(float64)))
 	case "float":
-		return fmt.Sprintf("%v", value.(float32))
+		return fmt.Sprintf("%v", value.(float64))
 	case "bool":
 		return fmt.Sprintf("%v", value.(bool))
 	}
