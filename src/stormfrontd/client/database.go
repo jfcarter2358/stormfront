@@ -12,7 +12,7 @@ const CERESDB_USERNAME = "ceresdb"
 var Collections = map[string]string{
 	"auth":        `{"id":"STRING","access_token":"STRING","refresh_token":"STRING","token_expiration":"STRING","token_issued":"STRING"}`,
 	"api":         `{"token":"STRING"}`,
-	"application": `{"id":"STRING","node":"STRING","name":"STRING","image":"STRING","hostname":"STRING","env":"DICT","ports":"DICT","mounts":"DICT","memory":"INT","cpu":"FLOAT","status":"DICT"}`,
+	"application": `{"id":"STRING","node":"STRING","name":"STRING","image":"STRING","hostname":"STRING","env":"DICT","ports":"DICT","mounts":"DICT","memory":"INT","cpu":"FLOAT","status":"DICT","namespace":"STRING"}`,
 	"leader":      `{"id":"STRING","succession":"LIST","unhealthy":"LIST","unknown":"LIST","healthy":"LIST"}`,
 	"node":        `{"id":"STRING","host":"STRING","port":"INT","system":"DICT","health":"STRING","type":"STRING"}`,
 	"client":      `{"id":"STRING","type":"STRING","leader":"DICT","succession":"LIST","unhealthy":"LIST","unknown":"LIST","updated":"STRING","host":"STRING","port":"INT","healthy":"BOOL","applications":"LIST","system":"DICT"}`,
