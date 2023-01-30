@@ -107,13 +107,17 @@ func ExecuteApply(definition, namespace string) error {
 		}
 
 		kind := datum["kind"].(string)
-		logging.Debug(fmt.Sprintf("Creating apply %s", name))
+		logging.Debug(fmt.Sprintf("Creating application %s", name))
 
 		switch kind {
 		case "namespace":
-			createNamespace(name)
+			if err := createNamespace(name); err != nil {
+				return err
+			}
 		case "application":
-			createApplication(host, port, apiToken, namespace, datum)
+			if err := createApplication(host, port, apiToken, namespace, datum); err != nil {
+				return err
+			}
 		default:
 			return fmt.Errorf("invalid object type of '%s', allowed types are 'namespace' and 'application'", kind)
 		}
