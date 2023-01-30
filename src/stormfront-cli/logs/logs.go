@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var LogsHelpText = fmt.Sprintf(`usage: stormfront logs <application id> [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
+var LogsHelpText = fmt.Sprintf(`usage: stormfront logs <application id> [-l|--log-level <log level>] [-h|--help]
 arguments:
 	-i|--id           The ID of the application to get
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s

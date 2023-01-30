@@ -68,7 +68,7 @@ func main() {
 
 	switch args[1] {
 	case "apply":
-		definition, namespace, err := apply.ParseApplyArgs(args[1:])
+		definition, namespace, err := apply.ParseApplyArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
 			fmt.Println(HelpText)
@@ -88,7 +88,7 @@ func main() {
 	case "edit":
 		edit.ParseEditArgs(args[1:])
 	case "join":
-		host, port, leader, joinToken, err := join.ParseJoinArgs(args[1:])
+		host, port, leader, joinToken, err := join.ParseJoinArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
 			fmt.Println(HelpText)
@@ -100,7 +100,7 @@ func main() {
 			os.Exit(1)
 		}
 	case "logs":
-		id, err := logs.ParseLogsArgs(args[1:])
+		id, err := logs.ParseLogsArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
 			fmt.Println(HelpText)
