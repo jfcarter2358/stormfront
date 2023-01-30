@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
-	"stormfront-cli/deploy"
-	"stormfront-cli/destroy"
+	"stormfront-cli/apply"
+	"stormfront-cli/create"
+	"stormfront-cli/delete"
+	"stormfront-cli/edit"
 	"stormfront-cli/get"
 	"stormfront-cli/join"
 	"stormfront-cli/logging"
@@ -63,12 +65,26 @@ func main() {
 	}
 
 	switch args[1] {
-	case "deploy":
-		deploy.ParseDeployArgs(args[1:])
-	case "destroy":
-		destroy.ParseDestroyArgs(args[1:])
+	case "apply":
+		definition, namespace, err := apply.ParseApplyArgs(args[1:])
+		if err != nil {
+			logging.Error(err.Error())
+			fmt.Println(HelpText)
+			os.Exit(1)
+		}
+		err = apply.ExecuteApply(definition, namespace)
+		if err != nil {
+			logging.Error(err.Error())
+			os.Exit(1)
+		}
+	case "create":
+		create.ParseCreateArgs(args[1:])
+	case "delete":
+		delete.ParseDeleteArgs(args[1:])
 	case "get":
 		get.ParseGetArgs(args[1:])
+	case "edit":
+		edit.ParseEditArgs(args[1:])
 	case "join":
 		host, port, leader, joinToken, err := join.ParseJoinArgs(args[1:])
 		if err != nil {
@@ -82,13 +98,13 @@ func main() {
 			os.Exit(1)
 		}
 	case "logs":
-		host, port, id, err := logs.ParseLogsArgs(args[1:])
+		id, err := logs.ParseLogsArgs(args[1:])
 		if err != nil {
 			logging.Error(err.Error())
 			fmt.Println(HelpText)
 			os.Exit(1)
 		}
-		err = logs.ExecuteLogs(host, port, id)
+		err = logs.ExecuteLogs(id)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)

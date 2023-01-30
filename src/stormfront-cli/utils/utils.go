@@ -85,3 +85,14 @@ func PrintTable(data []map[string]interface{}, headers, types []string) {
 
 	fmt.Println(output)
 }
+
+func Filter(data []map[string]interface{}, key, value string) []map[string]interface{} {
+	var output []map[string]interface{}
+	for _, datum := range data {
+		if datum[key].(string) == value {
+			output = append(output, datum)
+		}
+	}
+
+	return output
+}

@@ -5,6 +5,8 @@ import (
 	"os"
 	"stormfront-cli/get/application"
 	"stormfront-cli/get/client"
+	"stormfront-cli/get/cluster"
+	"stormfront-cli/get/namespace"
 	"stormfront-cli/get/node"
 	"stormfront-cli/logging"
 	"stormfront-cli/utils"
@@ -54,37 +56,61 @@ func ParseGetArgs(args []string) {
 
 	switch args[1] {
 	case "application", "app":
-		host, port, id, output, err := application.ParseApplicationArgs(args[2:])
+		id, output, namespace, allNamespaces, err := application.ParseApplicationArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
 			fmt.Println(GetHelpText)
 			os.Exit(1)
 		}
-		err = application.ExecuteApplication(host, port, id, output)
+		err = application.ExecuteApplication(id, output, namespace, allNamespaces)
+		if err != nil {
+			logging.Error(err.Error())
+			os.Exit(1)
+		}
+	case "cluster":
+		output, err := cluster.ParseClusterArgs(args[2:])
+		if err != nil {
+			logging.Error(err.Error())
+			fmt.Println(GetHelpText)
+			os.Exit(1)
+		}
+		err = cluster.ExecuteCluster(output)
+		if err != nil {
+			logging.Error(err.Error())
+			os.Exit(1)
+		}
+	case "namespace", "ns":
+		output, err := namespace.ParseNamespaceArgs(args[2:])
+		if err != nil {
+			logging.Error(err.Error())
+			fmt.Println(GetHelpText)
+			os.Exit(1)
+		}
+		err = namespace.ExecuteNamespace(output)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)
 		}
 	case "client", "cl":
-		host, port, id, output, err := client.ParseClientArgs(args[2:])
+		id, output, err := client.ParseClientArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
 			fmt.Println(GetHelpText)
 			os.Exit(1)
 		}
-		err = client.ExecuteClient(host, port, id, output)
+		err = client.ExecuteClient(id, output)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)
 		}
 	case "node", "no":
-		host, port, id, output, err := node.ParseNodeArgs(args[2:])
+		id, output, err := node.ParseNodeArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
 			fmt.Println(GetHelpText)
 			os.Exit(1)
 		}
-		err = node.ExecuteNode(host, port, id, output)
+		err = node.ExecuteNode(id, output)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)

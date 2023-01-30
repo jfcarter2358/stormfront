@@ -8,9 +8,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"stormfront-cli/auth"
+	"stormfront-cli/config"
 	"stormfront-cli/logging"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 var JoinHelpText = fmt.Sprintf(`usage: stormfront join -l <leader URL> -j <join-token> [-H <stormfront host>] [-p <stormfront port>] [-l <log level>] [-h|--help]
@@ -125,6 +129,25 @@ func ExecuteJoin(host, port, leader, joinToken string) error {
 	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
 	if resp.StatusCode == http.StatusOK {
+		apiToken, err := auth.GetAPIToken(host, port)
+		if err != nil {
+			return err
+		}
+
+		clusterName := uuid.New().String()
+
+		clusterData := config.ClusterConfig{
+			Name:             clusterName,
+			Token:            apiToken,
+			CurrentNamespace: "default",
+			Namespaces:       []string{"default"},
+			Host:             host,
+			Port:             port,
+		}
+
+		config.AddCluster(clusterData)
+		config.ChangeCluster(clusterName)
+
 		logging.Success("Done!")
 	} else {
 		var data map[string]string

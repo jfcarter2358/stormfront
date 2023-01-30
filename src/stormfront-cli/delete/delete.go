@@ -1,27 +1,27 @@
-package destroy
+package delete
 
 import (
 	"fmt"
 	"os"
-	"stormfront-cli/destroy/application"
-	"stormfront-cli/destroy/client"
+	"stormfront-cli/delete/application"
+	"stormfront-cli/delete/client"
+	"stormfront-cli/delete/cluster"
+	"stormfront-cli/delete/namespace"
 	"stormfront-cli/logging"
 	"stormfront-cli/utils"
 )
 
-var DestroyHelpText = fmt.Sprintf(`usage: stormfront application <command> [-l|--log-level <log level>] [-h|--help]
+var DeleteHelpText = fmt.Sprintf(`usage: stormfront delete <object> [-l|--log-level <log level>] [-h|--help]
 commands:
-	create            Create a new application
-	delete            Delete a running application
-	get-all           Get all running applications
-	get               Get a running application
-	logs              Get the logs for a running application
-	update            Update a running application
+	application       Delete an existing application
+	client            Delete an existing client
+	cluster           Delete a cluster from your .stormfrontconfig file
+	namespace         Delete a namespace from an existing cluster
 arguments:
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 
-func ParseDestroyArgs(args []string) {
+func ParseDeleteArgs(args []string) {
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
 	if present {
 		if err := logging.SetLevel(envLogLevel); err != nil {
@@ -44,25 +44,25 @@ func ParseDestroyArgs(args []string) {
 
 	if len(args) == 2 {
 		if utils.Contains(args, "-h") || utils.Contains(args, "--help") {
-			fmt.Println(DestroyHelpText)
+			fmt.Println(DeleteHelpText)
 			os.Exit(0)
 		}
 	}
 
 	if len(args) == 1 {
-		fmt.Println(DestroyHelpText)
+		fmt.Println(DeleteHelpText)
 		os.Exit(1)
 	}
 
 	switch args[1] {
 	case "application", "app":
-		host, port, id, err := application.ParseApplicationArgs(args[2:])
+		id, err := application.ParseApplicationArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
-			fmt.Println(DestroyHelpText)
+			fmt.Println(DeleteHelpText)
 			os.Exit(1)
 		}
-		err = application.ExecuteApplication(host, port, id)
+		err = application.ExecuteApplication(id)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)
@@ -71,7 +71,7 @@ func ParseDestroyArgs(args []string) {
 		host, port, err := client.ParseClientArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
-			fmt.Println(DestroyHelpText)
+			fmt.Println(DeleteHelpText)
 			os.Exit(1)
 		}
 		err = client.ExecuteClient(host, port)
@@ -79,9 +79,33 @@ func ParseDestroyArgs(args []string) {
 			logging.Error(err.Error())
 			os.Exit(1)
 		}
+	case "cluster":
+		name, err := cluster.ParseClusterArgs(args[2:])
+		if err != nil {
+			logging.Error(err.Error())
+			fmt.Println(DeleteHelpText)
+			os.Exit(1)
+		}
+		err = cluster.ExecuteCluster(name)
+		if err != nil {
+			logging.Error(err.Error())
+			os.Exit(1)
+		}
+	case "namespace", "ns":
+		id, err := namespace.ParseNamespaceArgs(args[2:])
+		if err != nil {
+			logging.Error(err.Error())
+			fmt.Println(DeleteHelpText)
+			os.Exit(1)
+		}
+		err = namespace.ExecuteNamespace(id)
+		if err != nil {
+			logging.Error(err.Error())
+			os.Exit(1)
+		}
 	default:
 		fmt.Printf("Invalid argument: %s\n", args[1])
-		fmt.Println(DestroyHelpText)
+		fmt.Println(DeleteHelpText)
 		os.Exit(1)
 	}
 

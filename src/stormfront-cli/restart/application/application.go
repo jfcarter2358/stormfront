@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"stormfront-cli/auth"
+	"stormfront-cli/config"
 	"stormfront-cli/logging"
 	"strings"
 )
@@ -83,11 +83,14 @@ func ExecuteApplication(host, port, id string) error {
 	logging.Debug("Sending GET request to client...")
 	logging.Trace(fmt.Sprintf("Sending request to %s", requestURL))
 
-	clientInfo := auth.ReadClientInformation()
+	apiToken, err := config.GetAPIToken()
+	if err != nil {
+		return err
+	}
 
 	httpClient := &http.Client{}
 	req, _ := http.NewRequest("GET", requestURL, nil)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", clientInfo.AccessToken))
+	req.Header.Set("Authorization", fmt.Sprintf("X-Stormfront-API %s", apiToken))
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err

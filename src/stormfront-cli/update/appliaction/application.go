@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"stormfront-cli/auth"
+	"stormfront-cli/config"
 	"stormfront-cli/logging"
 )
 
@@ -91,12 +91,15 @@ func ExecuteUpdate(host, port, definition, id string) error {
 	logging.Debug("Sending PATCH request to client...")
 	logging.Trace(fmt.Sprintf("Sending request to %s", requestURL))
 
-	clientInfo := auth.ReadClientInformation()
+	apiToken, err := config.GetAPIToken()
+	if err != nil {
+		return err
+	}
 
 	file, _ := ioutil.ReadFile(definition)
 	data := map[string]interface{}{}
 
-	err := json.Unmarshal([]byte(file), &data)
+	err = json.Unmarshal([]byte(file), &data)
 	if err != nil {
 		panic(err)
 	}
@@ -105,7 +108,7 @@ func ExecuteUpdate(host, port, definition, id string) error {
 
 	httpClient := &http.Client{}
 	req, _ := http.NewRequest("PATCH", requestURL, postBodyBuffer)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", clientInfo.AccessToken))
+	req.Header.Set("Authorization", fmt.Sprintf("X-Stormfront-API %s", apiToken))
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err

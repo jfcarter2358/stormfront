@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"stormfront-cli/auth"
+	"stormfront-cli/config"
 	"stormfront-cli/logging"
 	"stormfront-cli/utils"
 	"strings"
@@ -15,16 +15,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var NodeHelpText = fmt.Sprintf(`usage: stormfront get node [<node id>] [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
+var NodeHelpText = fmt.Sprintf(`usage: stormfront get node [<node id>] [-o|--output <output>] [-l|--log-level <log level>] [-h|--help]
 arguments:
-	-H|--host         The host of the stormfront client to connect to, defaults to "localhost"
-	-p|--port         The port of the stormfront client to connect to, defaults to "6626"
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 
-func ParseNodeArgs(args []string) (string, string, string, string, error) {
-	host := "localhost"
-	port := "6626"
+func ParseNodeArgs(args []string) (string, string, error) {
 	id := ""
 	output := "table"
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
@@ -36,36 +32,27 @@ func ParseNodeArgs(args []string) (string, string, string, string, error) {
 
 	for len(args) > 0 {
 		switch args[0] {
-		case "-H", "--host":
-			if len(args) > 1 {
-				host = args[1]
-				args = args[2:]
-			} else {
-				return "", "", "", "", errors.New("no value passed after host flag")
-			}
-		case "-p", "--port":
-			if len(args) > 1 {
-				port = args[1]
-				args = args[2:]
-			} else {
-				return "", "", "", "", errors.New("no value passed after port flag")
-			}
 		case "-o", "--output":
 			if len(args) > 1 {
-				output = args[1]
+				switch args[1] {
+				case "table", "yaml", "json":
+					output = args[1]
+				default:
+					return "", "", fmt.Errorf("invalid output value %s, allowed values are 'table', 'yaml', and 'json")
+				}
 				args = args[2:]
 			} else {
-				return "", "", "", "", errors.New("no value passed after output flag")
+				return "", "", errors.New("no value passed after output flag")
 			}
 		case "-l", "--log-level":
 			if len(args) > 1 {
 				err := logging.SetLevel(args[1])
 				if err != nil {
-					return "", "", "", "", err
+					return "", "", err
 				}
 				args = args[2:]
 			} else {
-				return "", "", "", "", errors.New("no value passed after log-level flag")
+				return "", "", errors.New("no value passed after log-level flag")
 			}
 		default:
 			if strings.HasPrefix(args[0], "-") {
@@ -79,14 +66,19 @@ func ParseNodeArgs(args []string) (string, string, string, string, error) {
 		}
 	}
 
-	if output != "table" && output != "yaml" && output != "json" {
-		return "", "", "", "", fmt.Errorf(`invalid output option "%s", valid arguments are "table", "yaml", and "json"`, output)
-	}
-
-	return host, port, id, output, nil
+	return id, output, nil
 }
 
-func ExecuteNode(host, port, id, output string) error {
+func ExecuteNode(id, output string) error {
+	host, err := config.GetHost()
+	if err != nil {
+		return err
+	}
+	port, err := config.GetPort()
+	if err != nil {
+		return err
+	}
+
 	logging.Info("Getting node...")
 
 	requestURL := ""
@@ -99,11 +91,14 @@ func ExecuteNode(host, port, id, output string) error {
 	logging.Debug("Sending GET request to client...")
 	logging.Trace(fmt.Sprintf("Sending request to %s", requestURL))
 
-	clientInfo := auth.ReadClientInformation()
+	apiToken, err := config.GetAPIToken()
+	if err != nil {
+		return err
+	}
 
 	httpClient := &http.Client{}
 	req, _ := http.NewRequest("GET", requestURL, nil)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", clientInfo.AccessToken))
+	req.Header.Set("Authorization", fmt.Sprintf("X-Stormfront-API %s", apiToken))
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err

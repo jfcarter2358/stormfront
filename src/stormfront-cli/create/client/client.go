@@ -8,10 +8,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"stormfront-cli/auth"
+	"stormfront-cli/config"
 	"stormfront-cli/logging"
+
+	"github.com/google/uuid"
 )
 
-var ClientHelpText = fmt.Sprintf(`usage: stormfront deploy client [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
+var ClientHelpText = fmt.Sprintf(`usage: stormfront create client [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
 arguments:
 	-H|--host         The host of the stormfront daemon to connect to, defaults to "localhost"
 	-p|--port         The port of the stormfront daemon to connect to, defaults to "6674"
@@ -94,6 +98,25 @@ func ExecuteClient(host, port string) error {
 	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
 	if resp.StatusCode == http.StatusOK {
+		apiToken, err := auth.GetAPIToken(host, port)
+		if err != nil {
+			return err
+		}
+
+		clusterName := uuid.New().String()
+
+		clusterData := config.ClusterConfig{
+			Name:             clusterName,
+			Token:            apiToken,
+			CurrentNamespace: "default",
+			Namespaces:       []string{"default"},
+			Host:             host,
+			Port:             port,
+		}
+
+		config.AddCluster(clusterData)
+		config.ChangeCluster(clusterName)
+
 		logging.Success("Done!")
 	} else {
 		var data map[string]string

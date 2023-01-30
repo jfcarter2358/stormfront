@@ -97,6 +97,7 @@ func lookupFunc(domain string) (string, error) {
 	parts := strings.Split(domain, ".")
 
 	length := len(parts)
+	namespace := parts[length-3]
 	hostname := parts[length-2]
 
 	nodes, err := getNodes()
@@ -109,7 +110,7 @@ func lookupFunc(domain string) (string, error) {
 	}
 
 	for _, app := range applications {
-		if app.Hostname == hostname {
+		if app.Hostname == hostname && app.Namespace == namespace {
 			scheduledNode := app.Node
 			for _, node := range nodes {
 				if node.ID == scheduledNode {
@@ -123,5 +124,5 @@ func lookupFunc(domain string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("no node is currently serving hostname '%s'", hostname)
+	return "", fmt.Errorf("no node is currently serving hostname '%s' with namespace '%s'", hostname, namespace)
 }

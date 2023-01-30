@@ -1,4 +1,4 @@
-package api
+package client
 
 import (
 	"encoding/json"
@@ -7,20 +7,19 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"stormfront-cli/auth"
 	"stormfront-cli/logging"
 )
 
-var DebugRefreshHelpText = fmt.Sprintf(`usage: stormfront token api refresh [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
+var ClientHelpText = fmt.Sprintf(`usage: stormfront delete client [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
 arguments:
-	-H|--host         The host of the stormfront client to connect to, defaults to "localhost"
-	-p|--port         The port of the stormfront client to connect to, defaults to "6626"
+	-H|--host         The host of the stormfront daemon to connect to, defaults to "localhost"
+	-p|--port         The port of the stormfront daemon to connect to, defaults to "6674"
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 
-func ParseRefreshArgs(args []string) (string, string, error) {
+func ParseClientArgs(args []string) (string, string, error) {
 	host := "localhost"
-	port := "6626"
+	port := "6674"
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
 	if present {
 		if err := logging.SetLevel(envLogLevel); err != nil {
@@ -56,7 +55,7 @@ func ParseRefreshArgs(args []string) (string, string, error) {
 			}
 		default:
 			fmt.Printf("Invalid argument: %s\n", args[0])
-			fmt.Println(DebugRefreshHelpText)
+			fmt.Println(ClientHelpText)
 			os.Exit(1)
 		}
 	}
@@ -64,25 +63,29 @@ func ParseRefreshArgs(args []string) (string, string, error) {
 	return host, port, nil
 }
 
-func ExecuteRefresh(host, port string) error {
-	logging.Info("Refreshing stormfront client token...")
+func ExecuteClient(host, port string) error {
+	logging.Info("Destroying stormfront client...")
 
-	requestURL := fmt.Sprintf("http://%s:%s/auth/refresh", host, port)
-
-	logging.Debug("Sending GET request to client...")
-	logging.Trace(fmt.Sprintf("Sending request to %s", requestURL))
-
-	clientInfo := auth.ReadClientInformation()
+	requestURL := fmt.Sprintf("http://%s:%s/api/destroy", host, port)
 
 	httpClient := &http.Client{}
-	req, _ := http.NewRequest("GET", requestURL, nil)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", clientInfo.RefreshToken))
-	resp, err := httpClient.Do(req)
+
+	// Create request
+	logging.Debug("Sending DELETE request to daemon...")
+	logging.Trace(fmt.Sprintf("Sending request to %s", requestURL))
+
+	req, err := http.NewRequest("DELETE", requestURL, nil)
 	if err != nil {
 		return err
 	}
 
 	logging.Debug("Done!")
+
+	// Fetch Request
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return err
+	}
 
 	defer resp.Body.Close()
 	//Read the response body
@@ -96,11 +99,7 @@ func ExecuteRefresh(host, port string) error {
 	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
 	if resp.StatusCode == http.StatusOK {
-		json.Unmarshal(body, &clientInfo)
-
-		err = auth.WriteClientInformation(clientInfo)
-
-		return err
+		logging.Success("Done!")
 	} else {
 		var data map[string]string
 		if err := json.Unmarshal([]byte(responseBody), &data); err == nil {
@@ -110,6 +109,5 @@ func ExecuteRefresh(host, port string) error {
 		}
 		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
 	}
-
-	return fmt.Errorf("client has returned error with status code %v", resp.StatusCode)
+	return nil
 }

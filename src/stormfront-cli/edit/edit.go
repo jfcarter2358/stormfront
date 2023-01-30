@@ -1,23 +1,23 @@
-package deploy
+package edit
 
 import (
 	"fmt"
 	"os"
-	"stormfront-cli/deploy/application"
-	"stormfront-cli/deploy/client"
+	"stormfront-cli/edit/cluster"
+	"stormfront-cli/edit/namespace"
 	"stormfront-cli/logging"
 	"stormfront-cli/utils"
 )
 
-var DeployHelpText = fmt.Sprintf(`usage: stormfront deploy <command> [-l|--log-level <log level>] [-h|--help]
+var EditHelpText = fmt.Sprintf(`usage: stormfront create <object> [-l|--log-level <log level>] [-h|--help]
 commands:
-	application       Create a new application
-	client            Create a new leader client 
+	cluster           Change currently targeted cluster
+	namespace         Change currently targeted namespace 
 arguments:
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 
-func ParseDeployArgs(args []string) {
+func ParseEditArgs(args []string) {
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
 	if present {
 		if err := logging.SetLevel(envLogLevel); err != nil {
@@ -40,44 +40,44 @@ func ParseDeployArgs(args []string) {
 
 	if len(args) == 2 {
 		if utils.Contains(args, "-h") || utils.Contains(args, "--help") {
-			fmt.Println(DeployHelpText)
+			fmt.Println(EditHelpText)
 			os.Exit(0)
 		}
 	}
 
 	if len(args) == 1 {
-		fmt.Println(DeployHelpText)
+		fmt.Println(EditHelpText)
 		os.Exit(1)
 	}
 
 	switch args[1] {
-	case "application", "app":
-		host, port, definition, err := application.ParseApplicationArgs(args[2:])
+	case "cluster":
+		oldName, newName, err := cluster.ParseClusterArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
-			fmt.Println(DeployHelpText)
+			fmt.Println(EditHelpText)
 			os.Exit(1)
 		}
-		err = application.ExecuteApplication(host, port, definition)
+		err = cluster.ExecuteCluster(oldName, newName)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)
 		}
-	case "client", "cl":
-		host, port, err := client.ParseClientArgs(args[2:])
+	case "namespace", "ns":
+		name, err := namespace.ParseNamespaceArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
-			fmt.Println(DeployHelpText)
+			fmt.Println(EditHelpText)
 			os.Exit(1)
 		}
-		err = client.ExecuteClient(host, port)
+		err = namespace.ExecuteNamespace(name)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)
 		}
 	default:
 		fmt.Printf("Invalid argument: %s\n", args[1])
-		fmt.Println(DeployHelpText)
+		fmt.Println(EditHelpText)
 		os.Exit(1)
 	}
 

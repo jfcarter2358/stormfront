@@ -1,4 +1,4 @@
-package join
+package access
 
 import (
 	"fmt"
@@ -7,16 +7,15 @@ import (
 	"stormfront-cli/utils"
 )
 
-var JoinHelpText = fmt.Sprintf(`usage: stormfront token join <command> [-l|--log-level <log level>] [-h|--help]
+var APIHelpText = fmt.Sprintf(`usage: stormfront token api <command> [-l|--log-level <log level>] [-h|--help]
 commands:
-    command           Get a join command for this stormfront cluster
-	get               Get a join token for this stormfront cluster
-	revoke            Revoke an existing join token for this stormfront cluster
+	get               Get an API token for this stormfront cluster
+	revoke            Revoke an existing API token for this stormfront cluster
 arguments:
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 
-func ParseJoinArgs(args []string) {
+func ParseAPIArgs(args []string) {
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
 	if present {
 		if err := logging.SetLevel(envLogLevel); err != nil {
@@ -39,56 +38,32 @@ func ParseJoinArgs(args []string) {
 
 	if len(args) == 2 {
 		if utils.Contains(args, "-h") || utils.Contains(args, "--help") {
-			fmt.Println(JoinHelpText)
+			fmt.Println(APIHelpText)
 			os.Exit(0)
 		}
 	}
 
 	if len(args) == 1 {
-		fmt.Println(JoinHelpText)
+		fmt.Println(APIHelpText)
 		os.Exit(1)
 	}
 
 	switch args[1] {
-	case "command":
-		host, port, err := ParseGetJoinCommandArgs(args[2:])
+	case "refresh":
+		err := ParseRefreshArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
-			fmt.Println(JoinHelpText)
+			fmt.Println(APIHelpText)
 			os.Exit(1)
 		}
-		err = ExecuteGetJoinCommand(host, port)
-		if err != nil {
-			logging.Error(err.Error())
-			os.Exit(1)
-		}
-	case "get":
-		host, port, err := ParseGetArgs(args[2:])
-		if err != nil {
-			logging.Error(err.Error())
-			fmt.Println(JoinHelpText)
-			os.Exit(1)
-		}
-		err = ExecuteGet(host, port)
-		if err != nil {
-			logging.Error(err.Error())
-			os.Exit(1)
-		}
-	case "revoke":
-		token, err := ParseRevokeArgs(args[2:])
-		if err != nil {
-			logging.Error(err.Error())
-			fmt.Println(JoinHelpText)
-			os.Exit(1)
-		}
-		err = ExecuteRevoke(token)
+		err = ExecuteRefresh()
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)
 		}
 	default:
 		fmt.Printf("Invalid argument: %s\n", args[1])
-		fmt.Println(JoinHelpText)
+		fmt.Println(APIHelpText)
 		os.Exit(1)
 	}
 

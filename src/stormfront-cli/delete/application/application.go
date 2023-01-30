@@ -7,21 +7,17 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"stormfront-cli/auth"
+	"stormfront-cli/config"
 	"stormfront-cli/logging"
 	"strings"
 )
 
-var ApplicationHelpText = fmt.Sprintf(`usage: stormfront destroy application <application id> [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
+var ApplicationHelpText = fmt.Sprintf(`usage: stormfront delete application <application id> [-l|--log-level <log level>] [-h|--help]
 arguments:
-	-H|--host         The host of the stormfront client to connect to, defaults to "localhost"
-	-p|--port         The port of the stormfront client to connect to, defaults to "6626"
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 
-func ParseApplicationArgs(args []string) (string, string, string, error) {
-	host := "localhost"
-	port := "6626"
+func ParseApplicationArgs(args []string) (string, error) {
 	id := ""
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
 	if present {
@@ -32,29 +28,15 @@ func ParseApplicationArgs(args []string) (string, string, string, error) {
 
 	for len(args) > 0 {
 		switch args[0] {
-		case "-H", "--host":
-			if len(args) > 1 {
-				host = args[1]
-				args = args[2:]
-			} else {
-				return "", "", "", errors.New("no value passed after host flag")
-			}
-		case "-p", "--port":
-			if len(args) > 1 {
-				port = args[1]
-				args = args[2:]
-			} else {
-				return "", "", "", errors.New("no value passed after port flag")
-			}
 		case "-l", "--log-level":
 			if len(args) > 1 {
 				err := logging.SetLevel(args[1])
 				if err != nil {
-					return "", "", "", err
+					return "", err
 				}
 				args = args[2:]
 			} else {
-				return "", "", "", errors.New("no value passed after log-level flag")
+				return "", errors.New("no value passed after log-level flag")
 			}
 		default:
 			if strings.HasPrefix(args[0], "-") || id != "" {
@@ -69,13 +51,22 @@ func ParseApplicationArgs(args []string) (string, string, string, error) {
 	}
 
 	if id == "" {
-		return "", "", "", errors.New("id argument is required")
+		return "", errors.New("id argument is required")
 	}
 
-	return host, port, id, nil
+	return id, nil
 }
 
-func ExecuteApplication(host, port, id string) error {
+func ExecuteApplication(id string) error {
+	host, err := config.GetHost()
+	if err != nil {
+		return err
+	}
+	port, err := config.GetPort()
+	if err != nil {
+		return err
+	}
+
 	logging.Info("Deleting application...")
 
 	requestURL := fmt.Sprintf("http://%s:%s/api/application/%s", host, port, id)
@@ -83,11 +74,14 @@ func ExecuteApplication(host, port, id string) error {
 	logging.Debug("Sending DELETE request to client...")
 	logging.Trace(fmt.Sprintf("Sending request to %s", requestURL))
 
-	clientInfo := auth.ReadClientInformation()
+	apiToken, err := config.GetAPIToken()
+	if err != nil {
+		return err
+	}
 
 	httpClient := &http.Client{}
 	req, _ := http.NewRequest("DELETE", requestURL, nil)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", clientInfo.AccessToken))
+	req.Header.Set("Authorization", fmt.Sprintf("X-Stormfront-API %s", apiToken))
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
