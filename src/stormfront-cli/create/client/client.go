@@ -120,7 +120,7 @@ func ExecuteClient(host, port, clientPort string) error {
 			CurrentNamespace: "default",
 			Namespaces:       []string{"default"},
 			Host:             host,
-			Port:             port,
+			Port:             clientPort,
 		}
 
 		err = config.AddCluster(clusterData)

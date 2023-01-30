@@ -28,7 +28,7 @@ arguments:
 
 func ParseJoinArgs(args []string) (string, string, string, string, error) {
 	host := "localhost"
-	port := "6674"
+	port := "6626"
 	joinToken := ""
 	leader := ""
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")

@@ -125,20 +125,20 @@ func ExecuteApply(definition, namespace string) error {
 }
 
 func createNamespace(name string) error {
+	logging.Info("Creating namespace...")
 	err := config.AddNamespace(name)
+
+	logging.Success("Done!")
 
 	return err
 }
 
 func createApplication(host, port, namespace, apiToken string, datum map[string]interface{}) error {
 	logging.Info("Creating application...")
-
 	requestURL := fmt.Sprintf("http://%s:%s/api/application", host, port)
 
 	logging.Debug("Sending POST request to client...")
 	logging.Trace(fmt.Sprintf("Sending request to %s", requestURL))
-
-	logging.Info("Creating application...")
 
 	if _, ok := datum["namespace"]; ok {
 		if namespace != "" {
