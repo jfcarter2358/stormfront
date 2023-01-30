@@ -115,7 +115,7 @@ func ExecuteApply(definition, namespace string) error {
 				return err
 			}
 		case "application":
-			if err := createApplication(host, port, apiToken, namespace, datum); err != nil {
+			if err := createApplication(host, port, namespace, apiToken, datum); err != nil {
 				return err
 			}
 		default:
