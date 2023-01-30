@@ -20,7 +20,7 @@ import (
 var JoinHelpText = fmt.Sprintf(`usage: stormfront join -l <leader URL> -j <join-token> [-H <stormfront host>] [-p <stormfront port>] [-l <log level>] [-h|--help]
 arguments:
 	-H|--host          The host of the stormfront client to connect to, defaults to "localhost"
-	-p|--port          The port of the stormfront client to connect to, defaults to "6674"
+	-p|--port          The port of the stormfront client to connect to, defaults to "6626"
 	-L|--leader        URL of the leader to join in the form <host>:<port>
 	-j|--join-token    Join token to use to connect to the leader
 	-l|--log-level     Sets the log level of the CLI. valid levels are: %s, defaults to %s

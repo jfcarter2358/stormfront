@@ -50,13 +50,13 @@ func ParseCreateArgs(args []string) {
 
 	switch args[1] {
 	case "client", "cl":
-		host, port, err := client.ParseClientArgs(args[2:])
+		host, port, clientPort, err := client.ParseClientArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
 			fmt.Println(CreateHelpText)
 			os.Exit(1)
 		}
-		err = client.ExecuteClient(host, port)
+		err = client.ExecuteClient(host, port, clientPort)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)

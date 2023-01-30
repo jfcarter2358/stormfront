@@ -17,14 +17,16 @@ import (
 
 var ClientHelpText = fmt.Sprintf(`usage: stormfront create client [-H|--host <stormfront host>] [-p|--port <stormfront port>] [-l|--log-level <log level>] [-h|--help]
 arguments:
-	-H|--host         The host of the stormfront daemon to connect to, defaults to "localhost"
-	-p|--port         The port of the stormfront daemon to connect to, defaults to "6674"
+	-H|--host         The host of the Stormfront daemon to connect to. Defaults to "localhost"
+	-p|--port         The port of the Stormfront daemon to connect to. Defaults to "6674"
+	-c|--client-port  The port that the Stormfront client will be deployed to. Defaults to "6626"
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 
-func ParseClientArgs(args []string) (string, string, error) {
+func ParseClientArgs(args []string) (string, string, string, error) {
 	host := "localhost"
 	port := "6674"
+	clientPort := "6626"
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
 	if present {
 		if err := logging.SetLevel(envLogLevel); err != nil {
@@ -39,24 +41,31 @@ func ParseClientArgs(args []string) (string, string, error) {
 				host = args[1]
 				args = args[2:]
 			} else {
-				return "", "", errors.New("no value passed after host flag")
+				return "", "", "", errors.New("no value passed after host flag")
 			}
 		case "-p", "--port":
 			if len(args) > 1 {
 				port = args[1]
 				args = args[2:]
 			} else {
-				return "", "", errors.New("no value passed after port flag")
+				return "", "", "", errors.New("no value passed after port flag")
+			}
+		case "-c", "--client-port":
+			if len(args) > 1 {
+				clientPort = args[1]
+				args = args[2:]
+			} else {
+				return "", "", "", errors.New("no value passed after client port flag")
 			}
 		case "-l", "--log-level":
 			if len(args) > 1 {
 				err := logging.SetLevel(args[1])
 				if err != nil {
-					return "", "", err
+					return "", "", "", err
 				}
 				args = args[2:]
 			} else {
-				return "", "", errors.New("no value passed after log-level flag")
+				return "", "", "", errors.New("no value passed after log-level flag")
 			}
 		default:
 			fmt.Printf("Invalid argument: %s\n", args[0])
@@ -65,10 +74,10 @@ func ParseClientArgs(args []string) (string, string, error) {
 		}
 	}
 
-	return host, port, nil
+	return host, port, clientPort, nil
 }
 
-func ExecuteClient(host, port string) error {
+func ExecuteClient(host, port, clientPort string) error {
 	logging.Info("Deploying stormfront client...")
 
 	requestURL := fmt.Sprintf("http://%s:%s/api/deploy", host, port)
@@ -98,7 +107,7 @@ func ExecuteClient(host, port string) error {
 	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
 	if resp.StatusCode == http.StatusOK {
-		apiToken, err := auth.GetAPIToken(host, port)
+		apiToken, err := auth.GetAPIToken(host, clientPort)
 		if err != nil {
 			return err
 		}
