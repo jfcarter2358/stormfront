@@ -25,7 +25,6 @@ arguments:
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 
 func ParseApplyArgs(args []string) (string, string, error) {
-
 	definition := ""
 	namespace := ""
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
