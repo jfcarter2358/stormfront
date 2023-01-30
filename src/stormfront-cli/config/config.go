@@ -28,8 +28,8 @@ func ReadConfig() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	configPath := getEnvDefault("STORMFRONTCONFIG", fmt.Sprintf("%s/.stormfrontconfig", usr.HomeDir))
-	_, err = os.Stat(configPath)
+	confPath := getEnvDefault("STORMFRONTCONFIG", fmt.Sprintf("%s/.stormfrontconfig", usr.HomeDir))
+	_, err = os.Stat(confPath)
 	if err == nil {
 		var data Config
 		file, _ := ioutil.ReadFile("conf.yaml")
@@ -39,19 +39,19 @@ func ReadConfig() (Config, error) {
 	return Config{CurrentCluster: "", Clusters: []ClusterConfig{}}, nil
 }
 
-func WriteConfig(config Config) error {
+func WriteConfig(conf Config) error {
 	usr, err := user.Current()
 	if err != nil {
 		return err
 	}
-	configPath := getEnvDefault("STORMFRONTCONFIG", fmt.Sprintf("%s/.stormfrontconfig", usr.HomeDir))
+	confPath := getEnvDefault("STORMFRONTCONFIG", fmt.Sprintf("%s/.stormfrontconfig", usr.HomeDir))
 
-	data, err := yaml.Marshal(&config)
+	data, err := yaml.Marshal(&conf)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(configPath, data, 0)
+	err = ioutil.WriteFile(confPath, data, 0)
 	if err != nil {
 		return err
 	}
@@ -60,164 +60,164 @@ func WriteConfig(config Config) error {
 }
 
 func ChangeCluster(newCluster string) error {
-	config, err := ReadConfig()
+	conf, err := ReadConfig()
 	if err != nil {
 		return err
 	}
 
-	config.CurrentCluster = newCluster
+	conf.CurrentCluster = newCluster
 
-	err = WriteConfig(config)
+	err = WriteConfig(conf)
 
 	return err
 }
 
 func AddCluster(clusterConfig ClusterConfig) error {
-	config, err := ReadConfig()
+	conf, err := ReadConfig()
 	if err != nil {
 		return err
 	}
 
-	config.Clusters = append(config.Clusters, clusterConfig)
+	conf.Clusters = append(conf.Clusters, clusterConfig)
 
-	err = WriteConfig(config)
+	err = WriteConfig(conf)
 
 	return err
 }
 
 func RemoveCluster(clusterName string) error {
-	config, err := ReadConfig()
+	conf, err := ReadConfig()
 	if err != nil {
 		return err
 	}
 
-	for idx, cluster := range config.Clusters {
+	for idx, cluster := range conf.Clusters {
 		if cluster.Name == clusterName {
-			config.Clusters = append(config.Clusters[:idx], config.Clusters[idx+1:]...)
+			conf.Clusters = append(conf.Clusters[:idx], conf.Clusters[idx+1:]...)
 			break
 		}
 	}
 
-	err = WriteConfig(config)
+	err = WriteConfig(conf)
 
 	return err
 }
 
 func GetCluster() (string, error) {
-	config, err := ReadConfig()
+	conf, err := ReadConfig()
 	if err != nil {
 		return "", err
 	}
 
-	return config.CurrentCluster, nil
+	return conf.CurrentCluster, nil
 }
 
 func GetClusters() ([]ClusterConfig, error) {
-	config, err := ReadConfig()
+	conf, err := ReadConfig()
 	if err != nil {
 		return []ClusterConfig{}, err
 	}
 
-	return config.Clusters, nil
+	return conf.Clusters, nil
 }
 
 func RenameCluster(oldName, newName string) error {
-	config, err := ReadConfig()
+	conf, err := ReadConfig()
 	if err != nil {
 		return err
 	}
 
-	if oldName == config.CurrentCluster {
-		config.CurrentCluster = newName
+	if oldName == conf.CurrentCluster {
+		conf.CurrentCluster = newName
 	}
 
-	for idx, cluster := range config.Clusters {
+	for idx, cluster := range conf.Clusters {
 		if cluster.Name == oldName {
-			config.Clusters[idx].Name = newName
+			conf.Clusters[idx].Name = newName
 		}
 	}
 
-	err = WriteConfig(config)
+	err = WriteConfig(conf)
 
 	return err
 }
 
 func ChangeNamespace(name string) error {
-	config, err := ReadConfig()
+	conf, err := ReadConfig()
 	if err != nil {
 		return err
 	}
 
-	for idx, cluster := range config.Clusters {
-		if cluster.Name == config.CurrentCluster {
-			config.Clusters[idx].CurrentNamespace = name
+	for idx, cluster := range conf.Clusters {
+		if cluster.Name == conf.CurrentCluster {
+			conf.Clusters[idx].CurrentNamespace = name
 			break
 		}
 	}
 
-	err = WriteConfig(config)
+	err = WriteConfig(conf)
 
 	return err
 }
 
 func GetNamespace() (string, error) {
-	config, err := ReadConfig()
+	conf, err := ReadConfig()
 	if err != nil {
 		return "", err
 	}
 
-	for _, cluster := range config.Clusters {
-		if cluster.Name == config.CurrentCluster {
+	for _, cluster := range conf.Clusters {
+		if cluster.Name == conf.CurrentCluster {
 			return cluster.CurrentNamespace, nil
 		}
 	}
 
-	return "", fmt.Errorf("could not find entry for cluster %s", config.CurrentCluster)
+	return "", fmt.Errorf("could not find entry for cluster %s", conf.CurrentCluster)
 }
 
 func GetNamespaces() ([]string, error) {
-	config, err := ReadConfig()
+	conf, err := ReadConfig()
 	if err != nil {
 		return []string{}, err
 	}
 
-	for _, cluster := range config.Clusters {
-		if cluster.Name == config.CurrentCluster {
+	for _, cluster := range conf.Clusters {
+		if cluster.Name == conf.CurrentCluster {
 			return cluster.Namespaces, nil
 		}
 	}
 
-	return []string{}, fmt.Errorf("could not find entry for cluster %s", config.CurrentCluster)
+	return []string{}, fmt.Errorf("could not find entry for cluster %s", conf.CurrentCluster)
 }
 
 func AddNamespace(name string) error {
-	config, err := ReadConfig()
+	conf, err := ReadConfig()
 	if err != nil {
 		return err
 	}
 
-	for idx, clusterConfig := range config.Clusters {
-		if config.CurrentCluster == clusterConfig.Name {
-			config.Clusters[idx].Namespaces = append(config.Clusters[idx].Namespaces, name)
+	for idx, clusterConfig := range conf.Clusters {
+		if conf.CurrentCluster == clusterConfig.Name {
+			conf.Clusters[idx].Namespaces = append(conf.Clusters[idx].Namespaces, name)
 		}
 	}
 
-	err = WriteConfig(config)
+	err = WriteConfig(conf)
 
 	return err
 }
 
 func RemoveNamespace(name string) error {
-	config, err := ReadConfig()
+	conf, err := ReadConfig()
 	if err != nil {
 		return err
 	}
 
-	for idx, cluster := range config.Clusters {
-		if cluster.Name == config.CurrentCluster {
+	for idx, cluster := range conf.Clusters {
+		if cluster.Name == conf.CurrentCluster {
 			for jdx, namespace := range cluster.Namespaces {
 				if namespace == name {
-					config.Clusters[idx].Namespaces = append(config.Clusters[idx].Namespaces[:jdx], config.Clusters[idx].Namespaces[jdx+1:]...)
+					conf.Clusters[idx].Namespaces = append(conf.Clusters[idx].Namespaces[:jdx], conf.Clusters[idx].Namespaces[jdx+1:]...)
 					break
 				}
 			}
@@ -225,53 +225,53 @@ func RemoveNamespace(name string) error {
 		}
 	}
 
-	err = WriteConfig(config)
+	err = WriteConfig(conf)
 
 	return err
 }
 
 func GetAPIToken() (string, error) {
-	config, err := ReadConfig()
+	conf, err := ReadConfig()
 	if err != nil {
 		return "", err
 	}
-	for _, cluster := range config.Clusters {
-		if cluster.Name == config.CurrentCluster {
+	for _, cluster := range conf.Clusters {
+		if cluster.Name == conf.CurrentCluster {
 			return cluster.Token, nil
 		}
 	}
 
-	return "", fmt.Errorf("could not find entry for cluster %s", config.CurrentCluster)
+	return "", fmt.Errorf("could not find entry for cluster %s", conf.CurrentCluster)
 }
 
 func GetHost() (string, error) {
-	config, err := ReadConfig()
+	conf, err := ReadConfig()
 	if err != nil {
 		return "", err
 	}
 
-	for _, cluster := range config.Clusters {
-		if cluster.Name == config.CurrentCluster {
+	for _, cluster := range conf.Clusters {
+		if cluster.Name == conf.CurrentCluster {
 			return cluster.Host, nil
 		}
 	}
 
-	return "", fmt.Errorf("could not find entry for cluster %s", config.CurrentCluster)
+	return "", fmt.Errorf("could not find entry for cluster %s", conf.CurrentCluster)
 }
 
 func GetPort() (string, error) {
-	config, err := ReadConfig()
+	conf, err := ReadConfig()
 	if err != nil {
 		return "", err
 	}
 
-	for _, cluster := range config.Clusters {
-		if cluster.Name == config.CurrentCluster {
+	for _, cluster := range conf.Clusters {
+		if cluster.Name == conf.CurrentCluster {
 			return cluster.Port, nil
 		}
 	}
 
-	return "", fmt.Errorf("could not find entry for cluster %s", config.CurrentCluster)
+	return "", fmt.Errorf("could not find entry for cluster %s", conf.CurrentCluster)
 }
 
 func getEnvDefault(key, defaultValue string) string {

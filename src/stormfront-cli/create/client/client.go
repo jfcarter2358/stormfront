@@ -124,7 +124,12 @@ func ExecuteClient(host, port, clientPort string) error {
 		}
 
 		config.AddCluster(clusterData)
+
+		conf, _ := config.ReadConfig()
+		fmt.Printf("%v\n", conf)
 		config.ChangeCluster(clusterName)
+		conf, _ = config.ReadConfig()
+		fmt.Printf("%v\n", conf)
 
 		logging.Success("Done!")
 	} else {
