@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -14,7 +15,7 @@ import (
 	"stormfront-cli/utils"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 var ApplyCreateHelpText = fmt.Sprintf(`usage: stormfront apply -f|--file <object definition file> [-n|--namespace <namespace>] [-l|--log-level <log level>] [-h|--help]
@@ -239,9 +240,30 @@ func parseYAML(definition string) []map[string]interface{} {
 	r := bytes.NewReader(file)
 	dec := yaml.NewDecoder(r)
 
+	// var data []map[string]interface{}
+	// var document map[string]interface{}
+	// for dec.Decode(&document) == nil {
+	// 	data = append(data, document)
+	// }
+
 	var data []map[string]interface{}
-	var document map[string]interface{}
-	for dec.Decode(&document) == nil {
+	for {
+		var node yaml.Node
+		err := dec.Decode(&node)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			panic(err)
+		}
+
+		content, err := yaml.Marshal(&node)
+		if err != nil {
+			panic(err)
+		}
+
+		document := map[string]interface{}{}
+		yaml.Unmarshal(content, &document)
 		data = append(data, document)
 	}
 
