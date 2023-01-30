@@ -123,13 +123,15 @@ func ExecuteClient(host, port, clientPort string) error {
 			Port:             port,
 		}
 
-		config.AddCluster(clusterData)
+		err = config.AddCluster(clusterData)
+		if err != nil {
+			return err
+		}
 
-		conf, _ := config.ReadConfig()
-		fmt.Printf("%v\n", conf)
-		config.ChangeCluster(clusterName)
-		conf, _ = config.ReadConfig()
-		fmt.Printf("%v\n", conf)
+		err = config.ChangeCluster(clusterName)
+		if err != nil {
+			return err
+		}
 
 		logging.Success("Done!")
 	} else {

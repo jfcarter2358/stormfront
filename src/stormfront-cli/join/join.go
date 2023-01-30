@@ -145,8 +145,15 @@ func ExecuteJoin(host, port, leader, joinToken string) error {
 			Port:             port,
 		}
 
-		config.AddCluster(clusterData)
-		config.ChangeCluster(clusterName)
+		err = config.AddCluster(clusterData)
+		if err != nil {
+			return err
+		}
+
+		err = config.ChangeCluster(clusterName)
+		if err != nil {
+			return err
+		}
 
 		logging.Success("Done!")
 	} else {

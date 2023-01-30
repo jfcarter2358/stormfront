@@ -51,7 +51,7 @@ func WriteConfig(conf Config) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(confPath, data, 0)
+	err = ioutil.WriteFile(confPath, data, 0740)
 	if err != nil {
 		return err
 	}
