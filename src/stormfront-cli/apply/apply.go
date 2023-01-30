@@ -100,6 +100,8 @@ func ExecuteApply(definition, namespace string) error {
 		logging.Error("Unsupported apply file format, must either be .json, .yaml, or .yml")
 	}
 
+	fmt.Printf("%v\n", data)
+
 	for _, datum := range data {
 		name := datum["name"].(string)
 		if _, ok := datum["kind"]; !ok {
@@ -107,7 +109,6 @@ func ExecuteApply(definition, namespace string) error {
 		}
 
 		kind := datum["kind"].(string)
-		logging.Debug(fmt.Sprintf("Creating application %s", name))
 
 		switch kind {
 		case "namespace":
