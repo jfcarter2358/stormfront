@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/user"
 
 	"gopkg.in/yaml.v2"
 )
@@ -23,8 +24,12 @@ type ClusterConfig struct {
 }
 
 func ReadConfig() (Config, error) {
-	configPath := getEnvDefault("STORMFRONTCONFIG", "~/.stormfrontconfig")
-	_, err := os.Stat(configPath)
+	usr, err := user.Current()
+	if err != nil {
+		return Config{}, err
+	}
+	configPath := getEnvDefault("STORMFRONTCONFIG", fmt.Sprintf("%s/.stormfrontconfig", usr.HomeDir))
+	_, err = os.Stat(configPath)
 	if err == nil {
 		var data Config
 		file, _ := ioutil.ReadFile("conf.yaml")
@@ -35,7 +40,11 @@ func ReadConfig() (Config, error) {
 }
 
 func WriteConfig(config Config) error {
-	configPath := getEnvDefault("STORMFRONTCONFIG", "~/.stormfrontconfig")
+	usr, err := user.Current()
+	if err != nil {
+		return err
+	}
+	configPath := getEnvDefault("STORMFRONTCONFIG", fmt.Sprintf("%s/.stormfrontconfig", usr.HomeDir))
 
 	data, err := yaml.Marshal(&config)
 	if err != nil {
