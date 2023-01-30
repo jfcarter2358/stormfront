@@ -32,7 +32,7 @@ func ReadConfig() (Config, error) {
 	_, err = os.Stat(confPath)
 	if err == nil {
 		var data Config
-		file, err := ioutil.ReadFile("conf.yaml")
+		file, err := ioutil.ReadFile(confPath)
 		if err != nil {
 			return Config{}, err
 		}
