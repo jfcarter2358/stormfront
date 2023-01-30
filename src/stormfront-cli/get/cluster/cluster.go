@@ -14,9 +14,9 @@ import (
 
 var ClusterHelpText = fmt.Sprintf(`usage: stormfront get cluster [-o|--output <output>] [-l|--log-level <log level>] [-h|--help]
 arguments:
-	-o|--output            Output format to print to console, valid options are "table", "yaml", and "json"
-	-l|--log-level         Sets the log level of the CLI. valid levels are: %s, defaults to %s
-	-h|--help              Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
+	-o|--output       Output format to print to console, valid options are "table", "yaml", and "json"
+	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
+	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 
 func ParseClusterArgs(args []string) (string, error) {
 	output := "table"

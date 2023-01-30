@@ -17,7 +17,7 @@ import (
 
 var ClientHelpText = fmt.Sprintf(`usage: stormfront get client [<client id>] [-o|--output <output>] [-l|--log-level <log level>] [-h|--help]
 arguments:
-	-o|--output            Output format to print to console, valid options are "table", "yaml", and "json"
+	-o|--output       Output format to print to console, valid options are "table", "yaml", and "json"
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 

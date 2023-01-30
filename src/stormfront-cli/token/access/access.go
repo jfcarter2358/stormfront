@@ -7,10 +7,9 @@ import (
 	"stormfront-cli/utils"
 )
 
-var APIHelpText = fmt.Sprintf(`usage: stormfront token api <command> [-l|--log-level <log level>] [-h|--help]
+var APIHelpText = fmt.Sprintf(`usage: stormfront token access <command> [-l|--log-level <log level>] [-h|--help]
 commands:
-	get               Get an API token for this stormfront cluster
-	revoke            Revoke an existing API token for this stormfront cluster
+	refresh           Refresh the local client's access token
 arguments:
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)

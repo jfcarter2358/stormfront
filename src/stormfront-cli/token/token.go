@@ -11,6 +11,7 @@ import (
 
 var TokenHelpText = fmt.Sprintf(`usage: stormfront token <command> [-l|--log-level <log level>] [-h|--help]
 commands:
+	access            Manage local client's access token
 	api               Manage api tokens for this Stormfront cluster
 	join              Manage join tokens for this Stormfront cluster
 arguments:

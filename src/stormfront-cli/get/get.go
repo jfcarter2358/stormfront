@@ -14,8 +14,10 @@ import (
 
 var GetHelpText = fmt.Sprintf(`usage: stormfront get <command> [-l|--log-level <log level>] [-h|--help]
 commands:
-	application       Get information about running applicationa
+	application       Get information about running applications
 	client            Get information about running clients
+	cluster           Get information about available clusters
+	namespace         Get information about namespaces in current cluster
 	node              Get information about running nodes
 arguments:
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
