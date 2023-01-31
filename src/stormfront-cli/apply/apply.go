@@ -182,6 +182,7 @@ func createApplication(host, port, namespace, apiToken string, datum map[string]
 	httpClient := &http.Client{}
 	req, _ := http.NewRequest("POST", requestURL, postBodyBuffer)
 	req.Header.Set("Authorization", fmt.Sprintf("X-Stormfront-API %s", apiToken))
+	req.Header.Set("Content-Type", "application/json")
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
