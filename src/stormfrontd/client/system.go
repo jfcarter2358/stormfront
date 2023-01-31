@@ -108,7 +108,6 @@ func updateSystemInfo() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(nodeMarshalled))
 
 	_, err = connection.Query(fmt.Sprintf(`put record stormfront.node %s`, nodeMarshalled))
 	if err != nil {

@@ -54,7 +54,7 @@ func ParseApplicationArgs(args []string) (string, string, string, bool, error) {
 			args = args[1:]
 		case "-n", "--namespace":
 			if len(args) > 1 {
-				output = args[1]
+				namespace = args[1]
 				args = args[2:]
 			} else {
 				return "", "", "", false, errors.New("no value passed after namespace flag")
