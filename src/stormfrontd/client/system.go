@@ -87,11 +87,15 @@ func updateSystemInfo() error {
 
 	// update node information
 	nodeData, err := connection.Query(fmt.Sprintf(`get record stormfront.client | filter id = "%s"`, Client.ID))
+	if err != nil {
+		return err
+	}
 
 	nodeBytes, err := json.Marshal(nodeData)
 	if err != nil {
 		return err
 	}
+	fmt.Println(string(nodeBytes))
 	var node StormfrontNode
 	json.Unmarshal(nodeBytes, &node)
 
