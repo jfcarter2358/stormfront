@@ -204,13 +204,16 @@ func createApplication(host, port, namespace, apiToken string, datum map[string]
 	} else {
 		var response_data map[string]string
 		if err := json.Unmarshal([]byte(responseBody), &response_data); err == nil {
-			if errMessage, ok := response_data["error"]; ok {
+			if _, ok := response_data["id"]; ok {
+				logging.Success("Done!")
+				return nil
+			} else if errMessage, ok := response_data["error"]; ok {
 				logging.Error(errMessage)
 			}
 		}
 		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
 	}
-	logging.Info("Done!")
+	logging.Success("Done!")
 
 	return nil
 }
