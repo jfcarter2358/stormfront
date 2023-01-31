@@ -97,7 +97,10 @@ func updateSystemInfo() error {
 	}
 	fmt.Println(string(nodeBytes))
 	var node StormfrontNode
-	json.Unmarshal(nodeBytes, &node)
+	err = json.Unmarshal(nodeBytes, &node)
+	if err != nil {
+		return err
+	}
 
 	node.System = systemInfo
 
