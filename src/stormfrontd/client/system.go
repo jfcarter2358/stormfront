@@ -24,7 +24,6 @@ type StormfrontSystemInfo struct {
 }
 
 func updateSystemInfo() error {
-	fmt.Println("Updating system info...")
 	systemInfo := StormfrontSystemInfo{}
 
 	cores, err := cpu.Counts(true)
@@ -69,6 +68,7 @@ func updateSystemInfo() error {
 
 	Client.System = systemInfo
 
+	// update client information
 	clientIDs, err := connection.Query(fmt.Sprintf(`get record stormfront.client .id | filter id = "%s"`, Client.ID))
 	if err != nil {
 		fmt.Printf("database error: %v", err)
@@ -80,6 +80,29 @@ func updateSystemInfo() error {
 	clientMap[".id"] = clientIDs[0][".id"]
 	clientData, _ = json.Marshal(clientMap)
 	_, err = connection.Query(fmt.Sprintf(`put record stormfront.client %s`, clientData))
+	if err != nil {
+		fmt.Printf("database error: %v", err)
+		return err
+	}
+
+	// update node information
+	nodeData, err := connection.Query(fmt.Sprintf(`get record stormfront.client | filter id = "%s"`, Client.ID))
+
+	nodeBytes, err := json.Marshal(nodeData)
+	if err != nil {
+		return err
+	}
+	var node StormfrontNode
+	json.Unmarshal(nodeBytes, &node)
+
+	node.System = systemInfo
+
+	nodeMarshalled, err := json.Marshal(node)
+	if err != nil {
+		return err
+	}
+
+	_, err = connection.Query(fmt.Sprintf(`put record stormfront.node %s`, nodeMarshalled))
 	if err != nil {
 		fmt.Printf("database error: %v", err)
 		return err
