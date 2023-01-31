@@ -86,7 +86,7 @@ func updateSystemInfo() error {
 	}
 
 	// update node information
-	nodeData, err := connection.Query(fmt.Sprintf(`get record stormfront.client | filter id = "%s"`, Client.ID))
+	nodeData, err := connection.Query(fmt.Sprintf(`get record stormfront.node | filter id = "%s"`, Client.ID))
 	if err != nil {
 		return err
 	}
