@@ -247,7 +247,7 @@ func CreateApplication(c *gin.Context) {
 					return
 				}
 				fmt.Println("7")
-				c.Status(http.StatusCreated)
+				c.JSON(http.StatusCreated, gin.H{"id": app.ID})
 				return
 			}
 			fmt.Printf("Insufficient resources to schedule on node %s: Available CPU: %v, requested CPU: %v, available memory: %v, requested memory: %v\n", node.ID, node.System.CPUAvailable, app.CPU, node.System.MemoryAvailable, app.Memory)
