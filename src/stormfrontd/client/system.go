@@ -95,14 +95,14 @@ func updateSystemInfo() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(nodeBytes))
-	var node StormfrontNode
+
+	var node map[string]interface{}
 	err = json.Unmarshal(nodeBytes, &node)
 	if err != nil {
 		return err
 	}
 
-	node.System = systemInfo
+	node["system"] = systemInfo
 
 	nodeMarshalled, err := json.Marshal(node)
 	if err != nil {
