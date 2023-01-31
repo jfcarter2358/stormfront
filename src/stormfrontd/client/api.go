@@ -183,7 +183,6 @@ func CreateApplication(c *gin.Context) {
 
 	nodeData, err := connection.Query("get record stormfront.node")
 	if err != nil {
-		fmt.Println("1")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -193,7 +192,6 @@ func CreateApplication(c *gin.Context) {
 
 	applicationData, err := connection.Query("get record stormfront.application")
 	if err != nil {
-		fmt.Println("2")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -205,7 +203,6 @@ func CreateApplication(c *gin.Context) {
 		for exposedPort := range runningApp.Ports {
 			for desiredPort := range app.Ports {
 				if exposedPort == desiredPort {
-					fmt.Println("3")
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "Port already allocated"})
 					return
 				}
@@ -224,11 +221,9 @@ func CreateApplication(c *gin.Context) {
 				appBytes, _ := json.Marshal(app)
 				_, err := connection.Query(fmt.Sprintf("post record stormfront.application %s", string(appBytes)))
 				if err != nil {
-					fmt.Println("4")
 					c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to create application: %v", err.Error())})
 					return
 				}
-				fmt.Println("5")
 				c.Status(http.StatusCreated)
 				return
 			}
@@ -242,18 +237,15 @@ func CreateApplication(c *gin.Context) {
 				appBytes, _ := json.Marshal(app)
 				_, err := connection.Query(fmt.Sprintf("post record stormfront.application %s", string(appBytes)))
 				if err != nil {
-					fmt.Println("6")
 					c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to create application: %v", err.Error())})
 					return
 				}
-				fmt.Println("7")
 				c.JSON(http.StatusCreated, gin.H{"id": app.ID})
 				return
 			}
 			fmt.Printf("Insufficient resources to schedule on node %s: Available CPU: %v, requested CPU: %v, available memory: %v, requested memory: %v\n", node.ID, node.System.CPUAvailable, app.CPU, node.System.MemoryAvailable, app.Memory)
 		}
 	}
-	fmt.Println("8")
 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Insufficient resources to schedule"})
 }
 
