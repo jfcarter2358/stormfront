@@ -24,6 +24,7 @@ type StormfrontSystemInfo struct {
 }
 
 func updateSystemInfo() error {
+	fmt.Println("Updating system info...")
 	systemInfo := StormfrontSystemInfo{}
 
 	cores, err := cpu.Counts(true)

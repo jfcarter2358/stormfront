@@ -28,7 +28,7 @@ const (
 	TRACE_LEVEL   int = 6
 )
 
-var Level = INFO_LEVEL
+var Level = ERROR_LEVEL
 
 func GetDefaults() string {
 	return fmt.Sprintf("%s, %s, %s, %s, %s, %s, %s, %s", NONE_NAME, FATAL_NAME, SUCCESS_NAME, ERROR_NAME, WARN_NAME, INFO_NAME, DEBUG_NAME, TRACE_NAME)
