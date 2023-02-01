@@ -7,6 +7,7 @@ import (
 	"stormfront-cli/delete/client"
 	"stormfront-cli/delete/cluster"
 	"stormfront-cli/delete/namespace"
+	"stormfront-cli/delete/route"
 	"stormfront-cli/logging"
 	"stormfront-cli/utils"
 )
@@ -16,6 +17,7 @@ commands:
 	application       Delete an existing application
 	client            Delete an existing client
 	cluster           Delete a cluster from your .stormfrontconfig file
+	route             Delete an existing route
 	namespace         Delete a namespace from an existing cluster
 arguments:
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
@@ -99,6 +101,18 @@ func ParseDeleteArgs(args []string) {
 			os.Exit(1)
 		}
 		err = namespace.ExecuteNamespace(id)
+		if err != nil {
+			logging.Error(err.Error())
+			os.Exit(1)
+		}
+	case "route", "rt":
+		id, namespace, err := route.ParseRouteArgs(args[2:])
+		if err != nil {
+			logging.Error(err.Error())
+			fmt.Println(DeleteHelpText)
+			os.Exit(1)
+		}
+		err = route.ExecuteRoute(id, namespace)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)

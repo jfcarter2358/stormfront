@@ -18,15 +18,14 @@ var RouteHelpText = fmt.Sprintf(`usage: stormfront route get [<route id>] [-o|--
 arguments:
 	-o|--output            Output format to print to console, valid options are "table", "yaml", and "json"
 	-n|--namespace         Namespace to grab routes from
-	-a|--all-namespaces    Show routes from all namespaces. Supersedes 'namespace' flag
+	-a|--all-namespaces    Show routes from all namespaces
 	-l|--log-level         Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help              Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 
-func ParseRouteArgs(args []string) (string, string, string, bool, error) {
+func ParseRouteArgs(args []string) (string, string, string, error) {
 	id := ""
 	output := "table"
 	namespace := ""
-	allNamespaces := false
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
 	if present {
 		if err := logging.SetLevel(envLogLevel); err != nil {
@@ -42,31 +41,31 @@ func ParseRouteArgs(args []string) (string, string, string, bool, error) {
 				case "table", "yaml", "json":
 					output = args[1]
 				default:
-					return "", "", "", false, fmt.Errorf("invalid output value %s, allowed values are 'table', 'yaml', and 'json", args[1])
+					return "", "", "", fmt.Errorf("invalid output value %s, allowed values are 'table', 'yaml', and 'json", args[1])
 				}
 				args = args[2:]
 			} else {
-				return "", "", "", false, errors.New("no value passed after output flag")
+				return "", "", "", errors.New("no value passed after output flag")
 			}
 		case "-a", "--all-namespaces":
-			allNamespaces = true
+			namespace = "all"
 			args = args[1:]
 		case "-n", "--namespace":
 			if len(args) > 1 {
 				namespace = args[1]
 				args = args[2:]
 			} else {
-				return "", "", "", false, errors.New("no value passed after namespace flag")
+				return "", "", "", errors.New("no value passed after namespace flag")
 			}
 		case "-l", "--log-level":
 			if len(args) > 1 {
 				err := logging.SetLevel(args[1])
 				if err != nil {
-					return "", "", "", false, err
+					return "", "", "", err
 				}
 				args = args[2:]
 			} else {
-				return "", "", "", false, errors.New("no value passed after log-level flag")
+				return "", "", "", errors.New("no value passed after log-level flag")
 			}
 		default:
 			if strings.HasPrefix(args[0], "-") || id != "" {
@@ -80,10 +79,10 @@ func ParseRouteArgs(args []string) (string, string, string, bool, error) {
 		}
 	}
 
-	return id, output, namespace, allNamespaces, nil
+	return id, output, namespace, nil
 }
 
-func ExecuteRoute(id, output, namespace string, allNamespaces bool) error {
+func ExecuteRoute(id, output, namespace string) error {
 	var routes []map[string]interface{}
 	var err error
 	if namespace == "" {

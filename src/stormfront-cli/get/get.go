@@ -8,6 +8,7 @@ import (
 	"stormfront-cli/get/cluster"
 	"stormfront-cli/get/namespace"
 	"stormfront-cli/get/node"
+	"stormfront-cli/get/route"
 	"stormfront-cli/logging"
 	"stormfront-cli/utils"
 )
@@ -19,6 +20,7 @@ commands:
 	cluster           Get information about available clusters
 	namespace         Get information about namespaces in current cluster
 	node              Get information about running nodes
+	route             Get information about defined routes
 arguments:
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
@@ -58,13 +60,13 @@ func ParseGetArgs(args []string) {
 
 	switch args[1] {
 	case "application", "app":
-		id, output, namespace, allNamespaces, err := application.ParseApplicationArgs(args[2:])
+		id, output, namespace, err := application.ParseApplicationArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
 			fmt.Println(GetHelpText)
 			os.Exit(1)
 		}
-		err = application.ExecuteApplication(id, output, namespace, allNamespaces)
+		err = application.ExecuteApplication(id, output, namespace)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)
@@ -77,6 +79,18 @@ func ParseGetArgs(args []string) {
 			os.Exit(1)
 		}
 		err = cluster.ExecuteCluster(output)
+		if err != nil {
+			logging.Error(err.Error())
+			os.Exit(1)
+		}
+	case "route", "rt":
+		id, output, namespace, err := route.ParseRouteArgs(args[2:])
+		if err != nil {
+			logging.Error(err.Error())
+			fmt.Println(GetHelpText)
+			os.Exit(1)
+		}
+		err = route.ExecuteRoute(id, output, namespace)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)
