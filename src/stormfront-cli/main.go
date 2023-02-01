@@ -100,13 +100,13 @@ func main() {
 			os.Exit(1)
 		}
 	case "logs":
-		id, err := logs.ParseLogsArgs(args[2:])
+		id, namespace, err := logs.ParseLogsArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
 			fmt.Println(HelpText)
 			os.Exit(1)
 		}
-		err = logs.ExecuteLogs(id)
+		err = logs.ExecuteLogs(id, namespace)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)

@@ -1,12 +1,10 @@
 package logs
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"os"
+	"stormfront-cli/action"
 	"stormfront-cli/config"
 	"stormfront-cli/logging"
 	"strings"
@@ -18,8 +16,9 @@ arguments:
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 
-func ParseLogsArgs(args []string) (string, error) {
+func ParseLogsArgs(args []string) (string, string, error) {
 	id := ""
+	namespace := ""
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
 	if present {
 		if err := logging.SetLevel(envLogLevel); err != nil {
@@ -33,11 +32,18 @@ func ParseLogsArgs(args []string) (string, error) {
 			if len(args) > 1 {
 				err := logging.SetLevel(args[1])
 				if err != nil {
-					return "", err
+					return "", "", err
 				}
 				args = args[2:]
 			} else {
-				return "", errors.New("no value passed after log-level flag")
+				return "", "", errors.New("no value passed after log-level flag")
+			}
+		case "-n", "--namespace":
+			if len(args) > 1 {
+				namespace = args[1]
+				args = args[2:]
+			} else {
+				return "", "", errors.New("no value passed after namespace flag")
 			}
 		default:
 			if strings.HasPrefix(args[0], "-") || id != "" {
@@ -51,66 +57,28 @@ func ParseLogsArgs(args []string) (string, error) {
 		}
 	}
 
-	return id, nil
+	return id, namespace, nil
 }
 
-func ExecuteLogs(id string) error {
-	host, err := config.GetHost()
-	if err != nil {
-		return err
-	}
-
-	port, err := config.GetPort()
-	if err != nil {
-		return err
-	}
-	logging.Info("Getting application...")
-
-	requestURL := fmt.Sprintf("http://%s:%s/api/application/%s/logs", host, port, id)
-
-	logging.Debug("Sending GET request to client...")
-	logging.Trace(fmt.Sprintf("Sending request to %s", requestURL))
-
-	apiToken, err := config.GetAPIToken()
-	if err != nil {
-		return err
-	}
-
-	httpClient := &http.Client{}
-	req, _ := http.NewRequest("GET", requestURL, nil)
-	req.Header.Set("Authorization", fmt.Sprintf("X-Stormfront-API %s", apiToken))
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	logging.Debug("Done!")
-
-	defer resp.Body.Close()
-	//Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	responseBody := string(body)
-
-	logging.Debug(fmt.Sprintf("Status code: %v", resp.StatusCode))
-	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
-
-	if resp.StatusCode == http.StatusOK {
-		responseJSON := map[string]string{}
-		json.Unmarshal(body, &responseJSON)
-		fmt.Println(responseJSON["logs"])
-		logging.Success("Done!")
-	} else {
-		var data map[string]string
-		if err := json.Unmarshal([]byte(responseBody), &data); err == nil {
-			if errMessage, ok := data["error"]; ok {
-				logging.Error(errMessage)
-			}
+func ExecuteLogs(id, namespace string) error {
+	var output string
+	var err error
+	if namespace == "" {
+		namespace, err = config.GetNamespace()
+		if err != nil {
+			return err
 		}
-		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
 	}
+
+	output, err = action.GetLogsByNameNamespace(id, namespace)
+	if err != nil {
+		output, err = action.GetLogsById(id)
+		if err != nil {
+			return err
+		}
+	}
+
+	fmt.Println(output)
 
 	return nil
 }
