@@ -20,8 +20,8 @@ const (
 const (
 	NONE_LEVEL    int = -1
 	FATAL_LEVEL   int = 0
-	SUCCESS_LEVEL int = 1
-	ERROR_LEVEL   int = 2
+	ERROR_LEVEL   int = 1
+	SUCCESS_LEVEL int = 2
 	WARN_LEVEL    int = 3
 	INFO_LEVEL    int = 4
 	DEBUG_LEVEL   int = 5

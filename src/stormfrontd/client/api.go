@@ -169,6 +169,7 @@ func GetNode(c *gin.Context) {
 
 	c.JSON(http.StatusOK, data[0])
 }
+
 func CreateApplication(c *gin.Context) {
 
 	if Client.Type != "Leader" {
@@ -517,4 +518,85 @@ func GetAllClients(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, clients)
+}
+
+func CreateRoute(c *gin.Context) {
+
+	if Client.Type != "Leader" {
+		fmt.Printf("Node is not leader, redirecting to http://%s:%v/api/route\n", Client.Leader.Host, Client.Leader.Port)
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/route", Client.Leader.Host, Client.Leader.Port))
+		return
+	}
+
+	var route StormfrontRoute
+	c.BindJSON(&route)
+	route.ID = uuid.NewString()
+
+	routeBytes, _ := json.Marshal(route)
+	_, err := connection.Query(fmt.Sprintf("post record stormfront.route %s", string(routeBytes)))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to create route: %v", err.Error())})
+		return
+	}
+	c.Status(http.StatusCreated)
+}
+
+func GetRoute(c *gin.Context) {
+	id := c.Param("id")
+
+	if Client.Type != "Leader" {
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/route/%s", Client.Leader.Host, Client.Leader.Port, id))
+		return
+	}
+
+	data, err := connection.Query(fmt.Sprintf(`get record stormfront.route | filter id = '%s'`, id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	if len(data) == 0 {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	c.JSON(http.StatusOK, data[0])
+}
+
+func GetAllRoutes(c *gin.Context) {
+	if Client.Type != "Leader" {
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/route", Client.Leader.Host, Client.Leader.Port))
+		return
+	}
+
+	data, err := connection.Query(`get record stormfront.route`)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	if len(data) == 0 {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	c.JSON(http.StatusOK, data)
+}
+
+func DeleteRoute(c *gin.Context) {
+	id := c.Param("id")
+
+	if Client.Type != "Leader" {
+		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/route/%s", Client.Leader.Host, Client.Leader.Port, id))
+		return
+	}
+
+	_, err := connection.Query(fmt.Sprintf(`get record stormfront.route | filter id = '%s' | delete record stormfront.route -`, id))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+
 }

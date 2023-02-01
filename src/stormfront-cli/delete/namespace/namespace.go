@@ -145,7 +145,6 @@ func ExecuteNamespace(name string) error {
 				logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
 
 				if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNoContent {
-					fmt.Println(responseBody)
 					logging.Success("Done!")
 				} else {
 					var data map[string]string

@@ -120,6 +120,10 @@ func ExecuteApply(definition, namespace string) error {
 			if err := createApplication(host, port, namespace, apiToken, datum); err != nil {
 				return err
 			}
+		case "route":
+			if err := createRoute(host, port, namespace, apiToken, datum); err != nil {
+				return err
+			}
 		default:
 			return fmt.Errorf("invalid object type of '%s', allowed types are 'namespace' and 'application'", kind)
 		}
@@ -128,6 +132,86 @@ func ExecuteApply(definition, namespace string) error {
 	logging.Success("All objects created")
 
 	return nil
+}
+
+func createRoute(host, port, namespace, apiToken string, datum map[string]interface{}) error {
+	logging.Info("Creating route...")
+	requestURL := fmt.Sprintf("http://%s:%s/api/route", host, port)
+
+	logging.Debug("Sending POST request to client...")
+	logging.Trace(fmt.Sprintf("Sending request to %s", requestURL))
+
+	if _, ok := datum["namespace"]; ok {
+		if namespace != "" {
+			namespaces, err := config.GetNamespaces()
+			if err != nil {
+				return err
+			}
+			if !utils.Contains(namespaces, namespace) {
+				return fmt.Errorf("route trying to be deployed to non-existent namespace: '%s'", namespace)
+			}
+			datum["namespace"] = namespace
+		}
+	} else {
+		if namespace != "" {
+			namespaces, err := config.GetNamespaces()
+			if err != nil {
+				return err
+			}
+			if !utils.Contains(namespaces, namespace) {
+				return fmt.Errorf("application trying to be deployed to non-existent namespace: '%s'", namespace)
+			}
+			datum["namespace"] = namespace
+		} else {
+			configNamespace, err := config.GetNamespace()
+			if err != nil {
+				return err
+			}
+			datum["namespace"] = configNamespace
+		}
+	}
+
+	postBody, _ := json.Marshal(datum)
+	postBodyBuffer := bytes.NewBuffer(postBody)
+
+	httpClient := &http.Client{}
+	req, _ := http.NewRequest("POST", requestURL, postBodyBuffer)
+	req.Header.Set("Authorization", fmt.Sprintf("X-Stormfront-API %s", apiToken))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	//Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	responseBody := string(body)
+
+	logging.Debug(fmt.Sprintf("Status code: %v", resp.StatusCode))
+	logging.Debug(fmt.Sprintf("Response body: %s", responseBody))
+
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusCreated {
+		logging.Success("Done!")
+	} else {
+		var response_data map[string]string
+		if err := json.Unmarshal([]byte(responseBody), &response_data); err == nil {
+			if _, ok := response_data["id"]; ok {
+				logging.Success("Done!")
+				return nil
+			} else if errMessage, ok := response_data["error"]; ok {
+				logging.Error(errMessage)
+			}
+		}
+		logging.Fatal(fmt.Sprintf("Client has returned error with status code %v", resp.StatusCode))
+	}
+	logging.Success("Done!")
+
+	return nil
+
 }
 
 func createNamespace(name string) error {

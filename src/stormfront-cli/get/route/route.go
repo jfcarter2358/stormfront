@@ -1,4 +1,4 @@
-package application
+package route
 
 import (
 	"encoding/json"
@@ -14,15 +14,15 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var ApplicationHelpText = fmt.Sprintf(`usage: stormfront application get [<application id>] [-o|--output <output>] [-n|--namespace] [-a|--all-namespaces] [-l|--log-level <log level>] [-h|--help]
+var RouteHelpText = fmt.Sprintf(`usage: stormfront route get [<route id>] [-o|--output <output>] [-n|--namespace] [-a|--all-namespaces] [-l|--log-level <log level>] [-h|--help]
 arguments:
 	-o|--output            Output format to print to console, valid options are "table", "yaml", and "json"
-	-n|--namespace         Namespace to grab applications from
-	-a|--all-namespaces    Show applications from all namespaces. Supersedes 'namespace' flag
+	-n|--namespace         Namespace to grab routes from
+	-a|--all-namespaces    Show routes from all namespaces. Supersedes 'namespace' flag
 	-l|--log-level         Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help              Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 
-func ParseApplicationArgs(args []string) (string, string, string, bool, error) {
+func ParseRouteArgs(args []string) (string, string, string, bool, error) {
 	id := ""
 	output := "table"
 	namespace := ""
@@ -71,7 +71,7 @@ func ParseApplicationArgs(args []string) (string, string, string, bool, error) {
 		default:
 			if strings.HasPrefix(args[0], "-") || id != "" {
 				fmt.Printf("Invalid argument: %s\n", args[0])
-				fmt.Println(ApplicationHelpText)
+				fmt.Println(RouteHelpText)
 				os.Exit(1)
 			} else {
 				id = args[0]
@@ -83,8 +83,8 @@ func ParseApplicationArgs(args []string) (string, string, string, bool, error) {
 	return id, output, namespace, allNamespaces, nil
 }
 
-func ExecuteApplication(id, output, namespace string, allNamespaces bool) error {
-	var applications []map[string]interface{}
+func ExecuteRoute(id, output, namespace string, allNamespaces bool) error {
+	var routes []map[string]interface{}
 	var err error
 	if namespace == "" {
 		namespace, err = config.GetNamespace()
@@ -94,14 +94,14 @@ func ExecuteApplication(id, output, namespace string, allNamespaces bool) error 
 	}
 
 	if id == "" {
-		applications, err = action.GetAllApplications(namespace)
+		routes, err = action.GetAllRoutes(namespace)
 		if err != nil {
 			return err
 		}
 	} else {
-		applications, err = action.GetApplicationByNameNamespace(id, namespace)
+		routes, err = action.GetRouteByNameNamespace(id, namespace)
 		if err != nil {
-			applications, err = action.GetApplicationById(id)
+			routes, err = action.GetRouteById(id)
 			if err != nil {
 				return err
 			}
@@ -110,31 +110,27 @@ func ExecuteApplication(id, output, namespace string, allNamespaces bool) error 
 
 	headers := []string{
 		"id",
-		"name",
-		"image",
-		"node",
+		"alias",
 		"hostname",
+		"port",
 		"namespace",
-		"status",
 	}
 	types := []string{
 		"string",
 		"string",
 		"string",
-		"string",
-		"string",
-		"string",
+		"int",
 		"string",
 	}
 
 	switch output {
 	case "table":
-		utils.PrintTable(applications, headers, types)
+		utils.PrintTable(routes, headers, types)
 	case "yaml":
-		contents, _ := yaml.Marshal(&applications)
+		contents, _ := yaml.Marshal(&routes)
 		fmt.Println(string(contents))
 	case "json":
-		contents, _ := json.Marshal(&applications)
+		contents, _ := json.Marshal(&routes)
 		fmt.Println(string(contents))
 	}
 	logging.Success("Done!")

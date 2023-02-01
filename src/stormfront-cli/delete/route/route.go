@@ -1,4 +1,4 @@
-package application
+package route
 
 import (
 	"errors"
@@ -10,12 +10,12 @@ import (
 	"strings"
 )
 
-var ApplicationHelpText = fmt.Sprintf(`usage: stormfront delete application <application id> [-l|--log-level <log level>] [-h|--help]
+var RouteHelpText = fmt.Sprintf(`usage: stormfront delete route <route id> [-l|--log-level <log level>] [-h|--help]
 arguments:
 	-l|--log-level    Sets the log level of the CLI. valid levels are: %s, defaults to %s
 	-h|--help         Show this help message and exit`, logging.GetDefaults(), logging.ERROR_NAME)
 
-func ParseApplicationArgs(args []string) (string, string, error) {
+func ParseRouteArgs(args []string) (string, string, error) {
 	id := ""
 	namespace := ""
 	envLogLevel, present := os.LookupEnv("STORMFRONT_LOG_LEVEL")
@@ -47,7 +47,7 @@ func ParseApplicationArgs(args []string) (string, string, error) {
 		default:
 			if strings.HasPrefix(args[0], "-") || id != "" {
 				fmt.Printf("Invalid argument: %s\n", args[0])
-				fmt.Println(ApplicationHelpText)
+				fmt.Println(RouteHelpText)
 				os.Exit(1)
 			} else {
 				id = args[0]
@@ -63,7 +63,7 @@ func ParseApplicationArgs(args []string) (string, string, error) {
 	return id, namespace, nil
 }
 
-func ExecuteApplication(id, namespace string) error {
+func ExecuteRoute(id, namespace string) error {
 	var err error
 	if namespace == "" {
 		namespace, err = config.GetNamespace()
@@ -72,9 +72,9 @@ func ExecuteApplication(id, namespace string) error {
 		}
 	}
 
-	err = action.DeleteApplicationByNameNamespace(id, namespace)
+	err = action.DeleteRouteByNameNamespace(id, namespace)
 	if err != nil {
-		err := action.DeleteApplicationById(id)
+		err := action.DeleteRouteById(id)
 		if err != nil {
 			return err
 		}

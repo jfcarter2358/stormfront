@@ -23,6 +23,10 @@ func InitializeRoutes(clientType string) {
 		apiRoutes.GET("/client/:id", middleware.CheckTokenAuthentication(), GetClient)
 		apiRoutes.GET("/node", middleware.CheckTokenAuthentication(), GetAllNodes)
 		apiRoutes.GET("/node/:id", middleware.CheckTokenAuthentication(), GetNode)
+		apiRoutes.GET("/route", middleware.CheckTokenAuthentication(), GetAllRoutes)
+		apiRoutes.GET("/route/:id", middleware.CheckTokenAuthentication(), GetRoute)
+		apiRoutes.POST("/route/:id", middleware.CheckTokenAuthentication(), CreateRoute)
+		apiRoutes.DELETE("/route/:id", middleware.CheckTokenAuthentication(), DeleteRoute)
 	}
 	authRoutes := Client.Router.Group("/auth")
 	{

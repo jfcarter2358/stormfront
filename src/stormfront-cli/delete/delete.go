@@ -56,13 +56,13 @@ func ParseDeleteArgs(args []string) {
 
 	switch args[1] {
 	case "application", "app":
-		id, err := application.ParseApplicationArgs(args[2:])
+		id, namespace, err := application.ParseApplicationArgs(args[2:])
 		if err != nil {
 			logging.Error(err.Error())
 			fmt.Println(DeleteHelpText)
 			os.Exit(1)
 		}
-		err = application.ExecuteApplication(id)
+		err = application.ExecuteApplication(id, namespace)
 		if err != nil {
 			logging.Error(err.Error())
 			os.Exit(1)
