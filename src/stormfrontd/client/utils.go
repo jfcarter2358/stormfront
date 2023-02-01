@@ -97,8 +97,8 @@ func lookupFunc(domain string) (string, error) {
 	parts := strings.Split(domain, ".")
 
 	length := len(parts)
-	namespace := parts[length-3]
-	hostname := parts[length-2]
+	namespace := parts[length-2]
+	hostname := parts[length-3]
 
 	nodes, err := getNodes()
 	if err != nil {
