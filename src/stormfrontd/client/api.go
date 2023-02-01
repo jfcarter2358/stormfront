@@ -575,11 +575,6 @@ func GetAllRoutes(c *gin.Context) {
 		return
 	}
 
-	if len(data) == 0 {
-		c.Status(http.StatusNotFound)
-		return
-	}
-
 	c.JSON(http.StatusOK, data)
 }
 

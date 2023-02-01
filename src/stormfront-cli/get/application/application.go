@@ -107,6 +107,10 @@ func ExecuteApplication(id, output, namespace string) error {
 		}
 	}
 
+	for idx, app := range applications {
+		applications[idx]["state"] = app["status"].(map[string]interface{})["status"].(string)
+	}
+
 	headers := []string{
 		"id",
 		"name",
@@ -114,7 +118,7 @@ func ExecuteApplication(id, output, namespace string) error {
 		"node",
 		"hostname",
 		"namespace",
-		"status",
+		"state",
 	}
 	types := []string{
 		"string",
