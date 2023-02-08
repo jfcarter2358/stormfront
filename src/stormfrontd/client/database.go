@@ -16,7 +16,7 @@ var Collections = map[string]string{
 	"leader":      `{"id":"STRING","succession":"LIST","unhealthy":"LIST","unknown":"LIST","healthy":"LIST"}`,
 	"node":        `{"id":"STRING","host":"STRING","port":"INT","system":"DICT","health":"STRING","type":"STRING"}`,
 	"client":      `{"id":"STRING","type":"STRING","leader":"DICT","succession":"LIST","unhealthy":"LIST","unknown":"LIST","updated":"STRING","host":"STRING","port":"INT","healthy":"BOOL","applications":"LIST","system":"DICT"}`,
-	"route":       `{"id":"STRING","hostname":"STRING","port":"INT","namespace":"STRING","alias":"STRING"}`,
+	"route":       `{"id":"STRING","hostname":"STRING","port":"INT","namespace":"STRING","alias":"STRING","name":"STRING"}`,
 }
 
 func CreateDatabases() error {

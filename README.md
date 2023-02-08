@@ -28,9 +28,11 @@ sudo ./uninstall.sh
 rm uninstall.sh
 ```
 
-**TODO**
+# TODO
 
-# To Do
+## 1.0.0
+
+**Features**
 
 - [x] Check system health
 - [x] Create application
@@ -45,6 +47,13 @@ rm uninstall.sh
 - [ ] Image pull policies
 - [ ] Image restart policies
 - [ ] Disaster recovery
+- [ ] Docker credentials
+- [ ] Secrets management
+- [ ] Log trailing
+
+**Bugs**
+
+- None
 
 # Contact
 

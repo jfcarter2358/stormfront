@@ -330,7 +330,7 @@ func RestartApplication(c *gin.Context) {
 
 	json.Unmarshal(appBytes, &app)
 
-	destroyApplication(app, false)
+	destroyApplication(app.Name, false)
 	deployApplication(app, false, false)
 }
 

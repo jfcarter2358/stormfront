@@ -204,9 +204,9 @@ func deployApplication(app StormfrontApplication, shouldAppend, shouldWipeData b
 	}
 }
 
-func destroyApplication(app StormfrontApplication, shouldWipeData bool) {
-	fmt.Printf("Destroying application %s\n", app.Name)
-	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill %s", config.Config.ContainerEngine, app.Name))
+func destroyApplication(name string, shouldWipeData bool) {
+	fmt.Printf("Destroying application %s\n", name)
+	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s kill %s", config.Config.ContainerEngine, name))
 	var outb1, errb1 bytes.Buffer
 	cmd.Stdout = &outb1
 	cmd.Stderr = &errb1
@@ -216,7 +216,7 @@ func destroyApplication(app StormfrontApplication, shouldWipeData bool) {
 		fmt.Printf("STDOUT: %s\n", outb1.String())
 		fmt.Printf("STDERR: %s\n", errb1.String())
 	}
-	cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s rm %s", config.Config.ContainerEngine, app.Name))
+	cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s rm %s", config.Config.ContainerEngine, name))
 	var outb2, errb2 bytes.Buffer
 	cmd.Stdout = &outb1
 	cmd.Stderr = &errb1
@@ -226,18 +226,18 @@ func destroyApplication(app StormfrontApplication, shouldWipeData bool) {
 		fmt.Printf("STDOUT: %s\n", outb2.String())
 		fmt.Printf("STDERR: %s\n", errb2.String())
 	}
-	err = os.Remove(fmt.Sprintf("/var/stormfront/%s.hosts", app.Name))
+	err = os.Remove(fmt.Sprintf("/var/stormfront/%s.hosts", name))
 	if err != nil {
 		fmt.Printf("Encountered error removing hosts file: %v\n", err.Error())
 	}
-	if shouldWipeData {
-		for src := range app.Mounts {
-			err := os.RemoveAll(fmt.Sprintf("/var/stormfront/data/%s/%s", app.Name, src))
-			if err != nil {
-				fmt.Printf("Encountered error removing mount data: %v\n", err.Error())
-			}
-		}
-	}
+	// if shouldWipeData {
+	// 	for src := range app.Mounts {
+	// 		err := os.RemoveAll(fmt.Sprintf("/var/stormfront/data/%s/%s", name, src))
+	// 		if err != nil {
+	// 			fmt.Printf("Encountered error removing mount data: %v\n", err.Error())
+	// 		}
+	// 	}
+	// }
 }
 
 func reconcileApplications() {
@@ -264,38 +264,64 @@ func reconcileApplications() {
 
 	// Check for applications that should be deployed
 	for _, definedApp := range definedApplications {
-		shouldBeDeployed := true
-		for _, runningApp := range Client.Applications {
-			if definedApp.ID == runningApp.ID {
-				shouldBeDeployed = false
-				break
-			}
-		}
-		if shouldBeDeployed {
-			if definedApp.Node == Client.ID {
+		// shouldBeDeployed := true
+
+		if definedApp.Node == Client.ID {
+			err := checkContainerExists(definedApp.Name)
+			if err != nil {
 				deployApplication(definedApp, true, true)
 			}
 		}
+		// for _, runningApp := range Client.Applications {
+		// 	if definedApp.ID == runningApp.ID {
+		// 		shouldBeDeployed = false
+		// 		break
+		// 	}
+		// }
+		// if shouldBeDeployed {
+		// 	if definedApp.Node == Client.ID {
+		// 		deployApplication(definedApp, true, true)
+		// 	}
+		// }
 	}
 
 	toRemove := []int{}
 
 	// Check for applications that should be torn down
-	for idx, runningApp := range Client.Applications {
-		shouldBeDestroyed := true
+	runningContainers, err := getRunningContainers()
+	if err != nil {
+		return
+	}
+	for _, container := range runningContainers {
+		if container == "ceresdb" {
+			continue
+		}
+		shouldDestroy := true
 		for _, definedApp := range definedApplications {
-			if definedApp.ID == runningApp.ID {
-				shouldBeDestroyed = false
+			if definedApp.Name == container {
+				shouldDestroy = false
 				break
 			}
 		}
-		if shouldBeDestroyed {
-			if runningApp.Node == Client.ID {
-				destroyApplication(runningApp, true)
-				toRemove = append(toRemove, idx)
-			}
+		if shouldDestroy {
+			destroyApplication(container, true)
 		}
 	}
+	// for idx, runningApp := range Client.Applications {
+	// shouldBeDestroyed := true
+	// for _, definedApp := range definedApplications {
+	// 	if definedApp.ID == runningApp.ID {
+	// 		shouldBeDestroyed = false
+	// 		break
+	// 	}
+	// }
+	// if shouldBeDestroyed {
+	// 	if runningApp.Node == Client.ID {
+	// 		destroyApplication(runningApp, true)
+	// 		toRemove = append(toRemove, idx)
+	// 	}
+	// }
+	// }
 
 	// Remove applications that should have been destroyed
 	sort.Sort(sort.Reverse(sort.IntSlice(toRemove)))
@@ -345,4 +371,60 @@ func reconcileApplications() {
 		fmt.Printf("database error: %v", err)
 		return
 	}
+}
+
+func checkContainerExists(name string) error {
+	var cmd *exec.Cmd
+	if config.Config.ContainerEngine == "docker" {
+		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s ps", config.Config.ContainerEngine))
+	} else {
+		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s ps", config.Config.ContainerEngine))
+	}
+	var outb bytes.Buffer
+	cmd.Stdout = &outb
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("output: %v\n", outb.String())
+	lines := strings.Split(outb.String(), "\n")
+	fmt.Printf("lines: %v\n", lines)
+
+	for _, line := range lines {
+		idx := strings.LastIndex(line, " ")
+		containerName := line[idx+1:]
+		if containerName == name {
+			return nil
+		}
+	}
+	return fmt.Errorf("container with name %s does not exist", name)
+}
+
+func getRunningContainers() ([]string, error) {
+	var cmd *exec.Cmd
+	if config.Config.ContainerEngine == "docker" {
+		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s ps", config.Config.ContainerEngine))
+	} else {
+		cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s ps", config.Config.ContainerEngine))
+	}
+	var outb bytes.Buffer
+	cmd.Stdout = &outb
+	err := cmd.Run()
+	if err != nil {
+		return []string{}, err
+	}
+
+	fmt.Printf("output: %v\n", outb.String())
+	lines := strings.Split(outb.String(), "\n")
+	fmt.Printf("lines: %v\n", lines)
+
+	output := []string{}
+
+	for _, line := range lines {
+		idx := strings.LastIndex(line, " ")
+		containerName := line[idx+1:]
+		output = append(output, containerName)
+	}
+	return output, nil
 }
