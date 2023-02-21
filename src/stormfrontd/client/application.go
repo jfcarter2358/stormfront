@@ -372,6 +372,7 @@ func getRunningContainers() ([]string, error) {
 	fmt.Printf("output: %v\n", outb.String())
 	lines := strings.Split(outb.String(), "\n")
 	fmt.Printf("lines: %v\n", lines)
+	print(len(lines))
 
 	output := []string{}
 
