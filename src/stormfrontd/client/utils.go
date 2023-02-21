@@ -43,8 +43,14 @@ func getHostFromNode(nodeId string) (string, error) {
 	}
 
 	var nodes []StormfrontNode
-	nodeBytes, _ := json.Marshal(nodeData)
-	json.Unmarshal(nodeBytes, &nodes)
+	nodeBytes, err := json.Marshal(nodeData)
+	if err != nil {
+		return "", err
+	}
+	err = json.Unmarshal(nodeBytes, &nodes)
+	if err != nil {
+		return "", err
+	}
 
 	for _, node := range nodes {
 		if nodeId == node.ID {
@@ -62,8 +68,14 @@ func getNodes() ([]StormfrontNode, error) {
 		return nil, err
 	}
 	nodes := []StormfrontNode{}
-	nodeBytes, _ := json.Marshal(nodeData)
-	json.Unmarshal(nodeBytes, &nodes)
+	nodeBytes, err := json.Marshal(nodeData)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(nodeBytes, &nodes)
+	if err != nil {
+		return nil, err
+	}
 
 	return nodes, nil
 }
@@ -74,8 +86,14 @@ func getApplications() ([]StormfrontApplication, error) {
 		return nil, err
 	}
 	var applications []StormfrontApplication
-	applicationBytes, _ := json.Marshal(applicationData)
-	json.Unmarshal(applicationBytes, &applications)
+	applicationBytes, err := json.Marshal(applicationData)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(applicationBytes, &applications)
+	if err != nil {
+		return nil, err
+	}
 
 	return applications, nil
 }
@@ -86,8 +104,14 @@ func getClients() ([]StormfrontClient, error) {
 		return nil, err
 	}
 	var clients []StormfrontClient
-	clientBytes, _ := json.Marshal(clientData)
-	json.Unmarshal(clientBytes, &clients)
+	clientBytes, err := json.Marshal(clientData)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(clientBytes, &clients)
+	if err != nil {
+		return nil, err
+	}
 
 	return clients, nil
 }
