@@ -253,6 +253,7 @@ func reconcileApplications() {
 
 	// Check for applications that should be torn down
 	runningContainers, err := getRunningContainers()
+	fmt.Printf("Running containers: %v\n", runningContainers)
 	if err != nil {
 		return
 	}
@@ -345,7 +346,7 @@ func checkContainerExists(name string) error {
 	lines := strings.Split(outb.String(), "\n")
 	fmt.Printf("lines: %v\n", lines)
 
-	for _, line := range lines[1:] {
+	for _, line := range lines[1 : len(lines)-1] {
 		idx := strings.LastIndex(line, " ")
 		containerName := line[idx+1:]
 		if containerName == name {
@@ -372,11 +373,10 @@ func getRunningContainers() ([]string, error) {
 	fmt.Printf("output: %v\n", outb.String())
 	lines := strings.Split(outb.String(), "\n")
 	fmt.Printf("lines: %v\n", lines)
-	print(len(lines))
 
 	output := []string{}
 
-	for _, line := range lines[1:] {
+	for _, line := range lines[1 : len(lines)-1] {
 		idx := strings.LastIndex(line, " ")
 		containerName := line[idx+1:]
 		output = append(output, containerName)
