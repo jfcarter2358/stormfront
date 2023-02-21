@@ -135,9 +135,12 @@ func GetState(c *gin.Context) {
 func GetAllNodes(c *gin.Context) {
 
 	if Client.Type != "Leader" {
+		fmt.Println("Redirecting")
 		c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("http://%s:%v/api/node", Client.Leader.Host, Client.Leader.Port))
 		return
 	}
+
+	fmt.Println("Not leader")
 
 	nodes, err := getNodes()
 	if err != nil {

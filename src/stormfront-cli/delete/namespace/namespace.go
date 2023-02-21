@@ -103,9 +103,13 @@ func ExecuteNamespace(name string) error {
 	if resp.StatusCode == http.StatusOK {
 		var data []map[string]interface{}
 		if strings.HasPrefix(responseBody, "[") {
-			json.Unmarshal([]byte(responseBody), &data)
+			if err := json.Unmarshal([]byte(responseBody), &data); err != nil {
+				return err
+			}
 		} else {
-			json.Unmarshal([]byte(fmt.Sprintf("[%s]", responseBody)), &data)
+			if err := json.Unmarshal([]byte(fmt.Sprintf("[%s]", responseBody)), &data); err != nil {
+				return err
+			}
 		}
 
 		for _, app := range data {

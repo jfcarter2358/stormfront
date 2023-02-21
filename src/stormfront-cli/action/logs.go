@@ -50,7 +50,9 @@ func GetLogsById(id string) (string, error) {
 
 	if resp.StatusCode == http.StatusOK {
 		responseJSON := map[string]string{}
-		json.Unmarshal(body, &responseJSON)
+		if err = json.Unmarshal(body, &responseJSON); err != nil {
+			return "", err
+		}
 		return responseJSON["logs"], nil
 	} else {
 		var data map[string]string

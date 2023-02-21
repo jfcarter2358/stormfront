@@ -309,8 +309,7 @@ func parseJSON(definition string) []map[string]interface{} {
 	}
 	data := []map[string]interface{}{}
 
-	err := json.Unmarshal([]byte(contents), &data)
-	if err != nil {
+	if err := json.Unmarshal([]byte(contents), &data); err != nil {
 		panic(err)
 	}
 

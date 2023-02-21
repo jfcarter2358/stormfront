@@ -66,7 +66,9 @@ func GetAPIToken(host, port string) (string, error) {
 
 	if resp.StatusCode == http.StatusOK {
 		responseJSON := map[string]string{}
-		json.Unmarshal(body, &responseJSON)
+		if err := json.Unmarshal(body, &responseJSON); err != nil {
+			return "", err
+		}
 		return responseJSON["token"], nil
 	} else {
 		var data map[string]string

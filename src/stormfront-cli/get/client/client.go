@@ -140,20 +140,28 @@ func ExecuteClient(id, output string) error {
 		case "table":
 			var data []map[string]interface{}
 			if strings.HasPrefix(responseBody, "[") {
-				json.Unmarshal([]byte(responseBody), &data)
+				if err := json.Unmarshal([]byte(responseBody), &data); err != nil {
+					return err
+				}
 			} else {
-				json.Unmarshal([]byte(fmt.Sprintf("[%s]", responseBody)), &data)
+				if err := json.Unmarshal([]byte(fmt.Sprintf("[%s]", responseBody)), &data); err != nil {
+					return err
+				}
 			}
 			utils.PrintTable(data, headers, types)
 		case "yaml":
 			if strings.HasPrefix(responseBody, "[") {
 				var data []map[string]interface{}
-				json.Unmarshal([]byte(responseBody), &data)
+				if err := json.Unmarshal([]byte(responseBody), &data); err != nil {
+					return err
+				}
 				contents, _ := yaml.Marshal(&data)
 				fmt.Println(string(contents))
 			} else {
 				var data map[string]interface{}
-				json.Unmarshal([]byte(responseBody), &data)
+				if err := json.Unmarshal([]byte(responseBody), &data); err != nil {
+					return err
+				}
 				contents, _ := yaml.Marshal(&data)
 				fmt.Println(string(contents))
 			}
