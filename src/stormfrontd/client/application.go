@@ -127,9 +127,6 @@ func deployApplication(app StormfrontApplication, shouldAppend, shouldWipeData b
 	if err := exec.Command("/bin/sh", "-c", fmt.Sprintf("%s rm %s", config.Config.ContainerEngine, app.Name)).Run(); err != nil {
 		fmt.Printf("No running container with name %s exists, skipping removal\n", app.Name)
 	}
-	if err := os.Remove(fmt.Sprintf("/var/stormfront/%s.hosts", app.Name)); err != nil {
-		fmt.Printf("Could not find /var/stormfront/%s.hosts file, skipping removal\n", app.Name)
-	}
 
 	// dockerCommand := fmt.Sprintf("%s run --net host -d --rm ", config.Config.ContainerEngine)
 	dockerCommand := fmt.Sprintf("%s run -d ", config.Config.ContainerEngine)
@@ -161,25 +158,6 @@ func deployApplication(app StormfrontApplication, shouldAppend, shouldWipeData b
 		fmt.Printf("Encountered error deploying Docker container: %v\n", err.Error())
 		fmt.Printf("STDOUT: %s\n", outb1.String())
 		fmt.Printf("STDERR: %s\n", errb1.String())
-		return
-	}
-
-	cmd = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s exec -u 0 %s sh -c \"cat /etc/hosts\"", config.Config.ContainerEngine, app.Name))
-	var outb2, errb2 bytes.Buffer
-	cmd.Stdout = &outb2
-	cmd.Stderr = &errb2
-	err = cmd.Run()
-	if err != nil {
-		fmt.Printf("Encountered error getting container /etc/hosts: %v\n", err.Error())
-		fmt.Printf("STDOUT: %s\n", outb2.String())
-		fmt.Printf("STDERR: %s\n", errb2.String())
-		return
-	}
-
-	hostData := outb2.String()
-	err = os.WriteFile(fmt.Sprintf("/var/stormfront/%s.hosts", app.Name), []byte(hostData), 0644)
-	if err != nil {
-		fmt.Printf("Encountered error writing hosts file: %v\n", err.Error())
 		return
 	}
 
@@ -225,10 +203,6 @@ func destroyApplication(name string, shouldWipeData bool) {
 		fmt.Printf("Encountered error removing container: %v\n", err.Error())
 		fmt.Printf("STDOUT: %s\n", outb2.String())
 		fmt.Printf("STDERR: %s\n", errb2.String())
-	}
-	err = os.Remove(fmt.Sprintf("/var/stormfront/%s.hosts", name))
-	if err != nil {
-		fmt.Printf("Encountered error removing hosts file: %v\n", err.Error())
 	}
 	// if shouldWipeData {
 	// 	for src := range app.Mounts {
@@ -401,7 +375,7 @@ func getRunningContainers() ([]string, error) {
 
 	output := []string{}
 
-	for _, line := range lines {
+	for _, line := range lines[1:] {
 		idx := strings.LastIndex(line, " ")
 		containerName := line[idx+1:]
 		output = append(output, containerName)
