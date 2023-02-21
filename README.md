@@ -13,6 +13,7 @@ Stormfront is a container orchestration system designed around
 # Install
 
 ```bash
+# Requires JQ installed on your machine
 curl -s https://raw.githubusercontent.com/jfcarter2358/stormfront/main/install.sh > install.sh
 chmod +x install.sh
 sudo ./install.sh

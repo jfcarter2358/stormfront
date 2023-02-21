@@ -252,16 +252,6 @@ func reconcileApplications() {
 	dataBytes, _ := json.Marshal(data)
 	json.Unmarshal(dataBytes, &definedApplications)
 
-	hostContents := ""
-	for _, definedApp := range definedApplications {
-		hostContents += fmt.Sprintf("%s %s\n", Client.Host, definedApp.Hostname)
-	}
-
-	err = os.WriteFile("/var/stormfront/hosts", []byte(hostContents), 0644)
-	if err != nil {
-		panic(err)
-	}
-
 	// Check for applications that should be deployed
 	for _, definedApp := range definedApplications {
 		// shouldBeDeployed := true
@@ -346,16 +336,6 @@ func reconcileApplications() {
 	// 	}
 	// }
 
-	// Update /etc/hosts for running applications
-	for _, definedApp := range definedApplications {
-		if Client.ID == definedApp.ID {
-			err = exec.Command("/bin/sh", "-c", fmt.Sprintf("%s exec -u 0 %s sh -c \"echo \\\"$(cat /var/stormfront/%s.hosts)\\n$(cat /var/stormfront/hosts)\\\" > /etc/hosts\"", config.Config.ContainerEngine, definedApp.Name, definedApp.Name)).Run()
-			if err != nil {
-				fmt.Printf("Encountered error copying to hosts file: %v\n", err.Error())
-				continue
-			}
-		}
-	}
 	clientIDs, err := connection.Query(fmt.Sprintf(`get record stormfront.client .id | filter id = "%s"`, Client.ID))
 	if err != nil {
 		fmt.Printf("database error: %v", err)
@@ -391,7 +371,7 @@ func checkContainerExists(name string) error {
 	lines := strings.Split(outb.String(), "\n")
 	fmt.Printf("lines: %v\n", lines)
 
-	for _, line := range lines {
+	for _, line := range lines[1:] {
 		idx := strings.LastIndex(line, " ")
 		containerName := line[idx+1:]
 		if containerName == name {
